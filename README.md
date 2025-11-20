@@ -9,3 +9,5 @@ API: https://developer.accuweather.com/core-weather/location-key-currentconditio
 
 
 ## Meilensteine (Wöchentliches Update)
+
+-Projektdetails erstellt
