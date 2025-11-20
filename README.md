@@ -6,3 +6,6 @@ Group project for ODE
 * Opacic-Peric Boris (ic24b042@technikum-wien.at)
 
 API: https://developer.accuweather.com/core-weather/location-key-currentconditions
+
+
+## Meilensteine (Wöchentliches Update)
