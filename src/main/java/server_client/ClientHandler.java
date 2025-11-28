@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.io.StringWriter;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
@@ -25,17 +26,16 @@ public class ClientHandler implements Runnable {
 
             while ((clientMessage = reader.readLine()) != null) {
                 String trimmedMessage = clientMessage.trim();
-                System.out.println("Recieved command: " + trimmedMessage);
+                System.out.println("Received command: " + trimmedMessage);
 
                 if ("PING".equalsIgnoreCase(trimmedMessage)) {
                     writer.println("PONG");
-                    System.out.println("Server odgovorio: PONG");
+                    System.out.println("Server responded: PONG");
                 }
                 else if (trimmedMessage.startsWith("GET_WEATHER:")) {
                     String city = trimmedMessage.substring("GET_WEATHER:".length()).trim();
 
-                    // TODO: P2 API
-                    String weatherData = "Status: OK | Aktuell time " + city + " se obrađuje.";
+                    String weatherData = "Status: OK | Current time " + city + " is being processed.";
                     writer.println(weatherData);
                 }
                 else if ("QUIT".equalsIgnoreCase(trimmedMessage)) {
@@ -44,21 +44,22 @@ public class ClientHandler implements Runnable {
                 }
                 else {
 
-                    writer.println("ERROR: Nepoznata komanda. Podržane: PING, GET_WEATHER:[GRAD], QUIT");
+                    writer.println("ERROR: Unknown command. Supported: PING, GET_WEATHER:[CITY], QUIT");
                 }
             }
         } catch (IOException e) {
-            // Ako dođe do prekida veze ili I/O greške
-            System.err.println("Klijent se diskonektovao ili I/O greska: " + clientSocket.getInetAddress().getHostAddress() + " - " + e.getMessage());
-            e.printStackTrace();
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            System.err.println("Client disconnected or I/O error: " + clientSocket.getInetAddress().getHostAddress() + " - " + e.getMessage());
+            System.err.println(sw);
         } finally {
             try {
-                // Uvek zatvori socket, bez obzira na ishod
                 clientSocket.close();
-                System.out.println("Konekcija zatvorena za klijenta: " + clientSocket.getInetAddress().getHostAddress());
+                System.out.println("Connection closed for client: " + clientSocket.getInetAddress().getHostAddress());
             } catch (IOException e) {
-                // Ignorišemo greške pri zatvaranju
-                e.printStackTrace();
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                System.err.println(sw);
             }
         }
     }

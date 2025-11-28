@@ -15,9 +15,9 @@ public class WeatherServer {
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
-            while (true) {
+            while (!serverSocket.isClosed()) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Novi klijent povezan: " + clientSocket.getInetAddress().getHostAddress());
+                System.out.println("New client connected: " + clientSocket.getInetAddress().getHostAddress());
 
                 clientPool.execute(new ClientHandler(clientSocket));
             }
@@ -26,7 +26,6 @@ public class WeatherServer {
             System.err.println("FATAL ERROR: Unable to start or accept the connection.");
 
             System.err.println("Message error: " + e.getMessage());
-            e.printStackTrace();
             clientPool.shutdown();
         }
     }

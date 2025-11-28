@@ -53,7 +53,6 @@ public class Client {
         } catch (IOException e) {
             System.err.println("Error connecting or communicating with server: " + e.getMessage());
             System.err.println("Check that WeatherServer is running and listening on port " + SERVER_PORT + " (host: " + HOST + ")");
-            e.printStackTrace();
         } finally {
             System.out.println("Client closed.");
         }
