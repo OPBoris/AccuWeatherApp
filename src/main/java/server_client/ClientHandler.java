@@ -9,15 +9,18 @@ import java.net.Socket;
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final WeatherService weatherService;
+    private final User currentUser;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         this.weatherService = new WeatherService();
+        this.currentUser = new GuestUser();
+        System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
+        System.out.println("Client created: " + currentUser.toString());
     }
 
     @Override
     public void run() {
-        System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
 
         try (
                 BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -67,6 +70,7 @@ public class ClientHandler implements Runnable {
             System.err.println("Error in communication with the client: " + e.getMessage());
         } finally {
             try {
+                System.out.println("Connection closed for user: " + currentUser.getUsername());
                 clientSocket.close();
             } catch (IOException e) {
                 System.err.println("Error closing client socket: " + e.getMessage());
