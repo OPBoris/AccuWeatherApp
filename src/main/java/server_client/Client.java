@@ -21,7 +21,7 @@ public class Client {
                 Scanner scanner = new Scanner(System.in)
         ) {
             System.out.println("Successfully connected to server at " + HOST + ":" + SERVER_PORT);
-            System.out.println("Enter command (e.g. PING, GET_WEATHER:Belgrade, QUIT):");
+            System.out.println("Enter command (e.g. PING, GET_WEATHER Belgrade, GET_HISTORY, QUIT):");
 
             String userInput;
 
