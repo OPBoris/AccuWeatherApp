@@ -16,7 +16,7 @@ public class ClientHandler implements Runnable {
         this.weatherService = new WeatherService();
         this.currentUser = new GuestUser();
         System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
-        System.out.println("Client created: " + currentUser.toString());
+        System.out.println("Client created: " + currentUser);
     }
 
     @Override
@@ -29,41 +29,64 @@ public class ClientHandler implements Runnable {
             String clientMessage;
 
             while ((clientMessage = reader.readLine()) != null) {
-                String trimmedMessage = clientMessage.trim();
                 if (clientMessage.trim().isEmpty()) continue;
 
                 String[] parts = clientMessage.trim().split("\\s+", 2);
                 String command = parts[0].toUpperCase();
 
-                System.out.println("Received command: " + trimmedMessage);
+                String username = currentUser.getUsername();
 
-                if ("PING".equals(command)) {
-                    writer.println("PONG");
-                }
+                System.out.println("Received command: " + clientMessage);
 
-                else if ("GET_WEATHER".equals(command)) {
-                    if (parts.length > 1 ){
-                        String city = parts[1].trim();
-                        String response = weatherService.getWeatherForCity(city);
-                        writer.println(response);
-                    } else {
-                        writer.println("ERROR: City name is missing.");
-                    }
+                switch (command) {
+                    case "PING":
+                        writer.println("PONG");
+                        break;
 
-                }
+                    case "SEARCH_CITIES":
+                        if (parts.length > 1) {
+                            String partialName = parts[1].trim();
+                            String suggestions = weatherService.searchCities(partialName);
+                            writer.println("SUGGESTIONS:" + suggestions);
+                        } else {
+                            writer.println("SUGGESTIONS:");
+                        }
+                        break;
 
-                else if ("GET_HISTORY".equals(command)) {
-                    String history = weatherService.getRecentCities();
-                    writer.println("HISTORY:" + history);
-                }
+                    case "GET_WEATHER":
+                        if (parts.length > 1) {
+                            String args = parts[1].trim();
 
-                else if ("QUIT".equals(command)) {
-                    writer.println("BYE");
-                    break;
-                }
+                            String city = args;
+                            String unit = "C";
 
-                else {
-                    writer.println("ERROR: Unknown command.");
+                            if (args.toUpperCase().endsWith(" F")) {
+                                unit = "F";
+                                city = args.substring(0, args.length() - 2).trim();
+                            } else if (args.toUpperCase().endsWith(" C")) {
+                                unit = "C";
+                                city = args.substring(0, args.length() - 2).trim();
+                            }
+
+                            String response = weatherService.getWeatherForCity(city, unit, username);
+                            writer.println(response);
+                        } else {
+                            writer.println("ERROR:Missing city name");
+                        }
+                        break;
+
+                    case "GET_HISTORY":
+                        String history = weatherService.getRecentCities(username);
+                        writer.println("HISTORY:" + history);
+                        break;
+
+                    case "QUIT":
+                        writer.println("BYE");
+                        return;
+
+                    default:
+                        writer.println("ERROR: Unknown command '" + command + "'");
+                        break;
                 }
             }
         } catch (IOException e) {

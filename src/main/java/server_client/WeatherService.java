@@ -3,15 +3,19 @@ package server_client;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class WeatherService {
-    private static final String HISTORY_FILE = "search_history.txt";
 
-    public String getWeatherForCity(String city) {
+public class WeatherService {
+    private static final int MAX_HISTORY_ENTRIES = 10;
+
+    public String getWeatherForCity(String city, String unit, String username) {
 
         if (city == null || city.trim().isEmpty()) {
             return "ERROR: City name cannot be empty.";
@@ -19,26 +23,56 @@ public class WeatherService {
 
         String cleanCity = formatCityName(city);
 
-        saveToHistory(cleanCity);
+        if (cleanCity.equalsIgnoreCase("ErrorCity")) {
+            return "ERROR: City not found.";
+        }
+
+        saveToHistory(cleanCity, username);
 
         // MOCK, later API call
         // TODO: JAN HttpURLConnection to AccuWeatheru
-        return mockWeatherData(cleanCity);
+        return mockWeatherData(cleanCity, unit);
     }
 
-    public String getRecentCities() {
-        if (!Files.exists(Paths.get(HISTORY_FILE))) {
+    public String searchCities(String partialName) {
+        if (partialName == null || partialName.trim().length() < 2) {
             return "";
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(HISTORY_FILE))) {
+        String query = partialName.trim().toLowerCase();
+
+        // MOCK: Simulation
+        List<String> suggestions = List.of(
+                "Wien,AT",
+                "Graz,AT",
+                "London,UK",
+                "New York,US",
+                "Miami,US",
+                "Paris,FR",
+                "Paris,US",
+                "Berlin,DE"
+        );
+
+        return suggestions.stream()
+                .filter(s -> s.toLowerCase().contains(query))
+                .limit(10)
+                .collect(Collectors.joining(";"));
+    }
+
+    public String getRecentCities(String username) {
+        String historyFile = username + "_history.txt";
+        if (!Files.exists(Paths.get(historyFile))) {
+            return "";
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(historyFile))) {
 
             List<String> allLines = reader.lines().collect(Collectors.toList());
             Collections.reverse(allLines);
 
             return allLines.stream()
                     .distinct()
-                    .limit(5)
+                    .limit(MAX_HISTORY_ENTRIES)
                     .collect(Collectors.joining(","));
         } catch (IOException e) {
             System.err.println("Error reading history: " + e.getMessage());
@@ -47,10 +81,12 @@ public class WeatherService {
     }
 
     // TODO: JAN bearbeiten was alles wird in history gespeichert, format etc.
-    private synchronized void saveToHistory(String city) {
+    private synchronized void saveToHistory(String city, String username) {
 
+        String historyFile = username + "_history.txt";
         String formattedCity = formatCityName(city);
-        try (PrintWriter writer = new PrintWriter(new FileWriter(HISTORY_FILE, true))) {
+        String cityWithCountry = formattedCity + "," + mockCountry(formattedCity);
+        try (PrintWriter writer = new PrintWriter(new FileWriter(historyFile, true))) {
             writer.println(formattedCity);
         } catch (IOException e) {
             System.err.println("Error while writing to history: " + e.getMessage());
@@ -79,12 +115,36 @@ public class WeatherService {
     }
 
     // TODO: JAN ersetzen mit echtem API call und parsing - funktion löschen oder anpassen
-    private String mockWeatherData(String city) {
+    private String mockCountry(String city) {
+        if(city.equalsIgnoreCase("Wien") || city.equalsIgnoreCase("Graz")) return "AT";
+        if(city.equalsIgnoreCase("New York") || city.equalsIgnoreCase("Miami")) return "US";
+        if(city.equalsIgnoreCase("London")) return "UK";
+        if(city.equalsIgnoreCase("Paris")) return "FR";
+        if(city.equalsIgnoreCase("Berlin")) return "DE";
+        return "N/A";
+    }
+    private String mockWeatherData(String city, String unit) {
         Random rand = new Random();
-        int temp = 10 + rand.nextInt(25);
-        String[] desc = {"Sunny", "Cloudy", "Rain", "Windy", "Stormy", "Snowy"};
-        String description = desc[rand.nextInt(desc.length)];
+        boolean isMetric = "C".equalsIgnoreCase(unit);
 
-        return city + "|" + temp + "°C|" + description;
+        double tempBase = 10 + rand.nextInt(20);
+        double temp = isMetric ? tempBase : (tempBase * 9/5) + 32;
+
+        double feelsLikeBase = tempBase - 2;
+        double feelsLike = isMetric ? feelsLikeBase : (feelsLikeBase * 9/5) + 32;
+
+        int humidity = 40 + rand.nextInt(40);
+        int windSpeed = rand.nextInt(30);
+        int precipProb = rand.nextInt(100);
+
+        String[] conditions = {"Sunny", "Cloudy", "Rainy"};
+        String condition = conditions[rand.nextInt(conditions.length)];
+        String country = mockCountry(city);
+
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+
+        return String.format(Locale.US,
+                "CITY=%s;COUNTRY=%s;TEMP=%.1f;FEELS_LIKE=%.1f;HUMIDITY=%d;WIND=%d;PRECIP=%d;CONDITION=%s;UNIT=%s;TIME=%s",
+                city, country, temp, feelsLike, humidity, windSpeed, precipProb, condition, isMetric ? "C" : "F", time);
     }
 }
