@@ -76,7 +76,7 @@ public class WeatherService {
                     .collect(Collectors.joining(","));
         } catch (IOException e) {
             System.err.println("Error reading history: " + e.getMessage());
-            return "ERROR: Unable to read history.";
+            return "ERROR: History unavailable.";
         }
     }
 
