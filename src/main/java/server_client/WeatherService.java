@@ -128,10 +128,10 @@ public class WeatherService {
         boolean isMetric = "C".equalsIgnoreCase(unit);
 
         double tempBase = 10 + rand.nextInt(20);
-        double temp = isMetric ? tempBase : (tempBase * 9/5) + 32;
+        double temp = isMetric ? tempBase : (tempBase * 9.0/5.0) + 32;
 
         double feelsLikeBase = tempBase - 2;
-        double feelsLike = isMetric ? feelsLikeBase : (feelsLikeBase * 9/5) + 32;
+        double feelsLike = isMetric ? feelsLikeBase : (feelsLikeBase * 9.0/5.0) + 32;
 
         int humidity = 40 + rand.nextInt(40);
         int windSpeed = rand.nextInt(30);
