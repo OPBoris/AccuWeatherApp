@@ -71,7 +71,7 @@ public class ClientHandler implements Runnable {
                             String response = weatherService.getWeatherForCity(city, unit, username);
                             writer.println(response);
                         } else {
-                            writer.println("ERROR:Missing city name");
+                            writer.println("ERROR: Missing city name");
                         }
                         break;
 
