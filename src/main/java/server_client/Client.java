@@ -18,7 +18,34 @@ public class Client {
 
         ) {
             System.out.println("Successfully connected to server at " + HOST + ":" + SERVER_PORT);
-            Application.launch(UI.class, args);
+            System.out.println("Enter command (e.g. PING, GET_WEATHER Belgrade, GET_HISTORY, QUIT):");
+
+            String userInput;
+
+            while (true) {
+                System.out.print("Client > ");
+                if (scanner.hasNextLine()) {
+                    userInput = scanner.nextLine();
+
+                    if (userInput.trim().isEmpty()) continue;
+
+                    writer.println(userInput);
+
+                    String serverResponse = reader.readLine();
+                    if (serverResponse != null) {
+                        System.out.println("Server < " + serverResponse);
+                    } else {
+                        System.out.println("Server closed the connection.");
+                        break;
+                    }
+
+                    if ("QUIT".equalsIgnoreCase(userInput.trim()) || "BYE".equalsIgnoreCase(serverResponse)) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
 
         } catch (IOException e) {
             System.err.println("Error connecting or communicating with server: " + e.getMessage());

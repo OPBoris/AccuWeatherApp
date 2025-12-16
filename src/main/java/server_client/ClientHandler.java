@@ -8,49 +8,95 @@ import java.net.Socket;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
+    private final WeatherService weatherService;
+    private final User currentUser;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
+        this.weatherService = new WeatherService();
+        this.currentUser = new GuestUser();
+        System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
+        System.out.println("Client created: " + currentUser);
     }
 
     @Override
     public void run() {
-        System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-             PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)) {
-
+        try (
+                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)
+        ) {
             String clientMessage;
 
             while ((clientMessage = reader.readLine()) != null) {
-                String trimmedMessage = clientMessage.trim();
-                System.out.println("Received command: " + trimmedMessage);
+                if (clientMessage.trim().isEmpty()) continue;
 
-                if ("PING".equalsIgnoreCase(trimmedMessage)) {
-                    writer.println("PONG");
-                    System.out.println("Server responded: PONG");
-                }
-                else if (trimmedMessage.startsWith("GET_WEATHER:")) {
-                    String city = trimmedMessage.substring("GET_WEATHER:".length()).trim();
+                String[] parts = clientMessage.trim().split("\\s+", 2);
+                String command = parts[0].toUpperCase();
 
-                    String weatherData = "Status: OK | Processing weather for " + city + ".";
-                    writer.println(weatherData);
-                }
-                else if ("QUIT".equalsIgnoreCase(trimmedMessage)) {
-                    writer.println("BYE");
-                    break;
-                }
-                else {
-                    writer.println("ERROR: Unknown command. Supported: PING, GET_WEATHER:[CITY], QUIT");
+                String username = currentUser.getUsername();
+
+                System.out.println("Received command: " + clientMessage);
+
+                switch (command) {
+                    case "PING":
+                        writer.println("PONG");
+                        break;
+
+                    case "SEARCH_CITIES":
+                        if (parts.length > 1) {
+                            String partialName = parts[1].trim();
+                            String suggestions = weatherService.searchCities(partialName);
+                            writer.println("SUGGESTIONS:" + suggestions);
+                        } else {
+                            writer.println("SUGGESTIONS:");
+                        }
+                        break;
+
+                    case "GET_WEATHER":
+                        if (parts.length > 1) {
+                            String args = parts[1].trim();
+
+                            String city = args;
+                            String unit = "C";
+
+                            if (args.toUpperCase().endsWith(" F")) {
+                                unit = "F";
+                                city = args.substring(0, args.length() - 2).trim();
+                            } else if (args.toUpperCase().endsWith(" C")) {
+                                unit = "C";
+                                city = args.substring(0, args.length() - 2).trim();
+                            }
+
+                            String response = weatherService.getWeatherForCity(city, unit, username);
+                            writer.println(response);
+                        } else {
+                            writer.println("ERROR: Missing city name");
+                        }
+                        break;
+
+                    case "GET_HISTORY":
+                        String history = weatherService.getRecentCities(username);
+                        writer.println("HISTORY:" + history);
+                        break;
+
+                    case "QUIT":
+                        writer.println("BYE");
+                        return;
+
+                    default:
+                        writer.println("ERROR: Unknown command '" + command + "'");
+                        break;
                 }
             }
         } catch (IOException e) {
-            System.err.println("Client disconnected or I/O error: " + clientSocket.getInetAddress().getHostAddress() + " - " + e.getMessage());
+            System.err.println("Error in communication with the client: " + e.getMessage());
+        } finally {
             try {
+                System.out.println("Connection closed for user: " + currentUser.getUsername());
                 clientSocket.close();
-                System.out.println("Connection closed for client: " + clientSocket.getInetAddress().getHostAddress());
-            } catch (IOException ex) {
-                System.err.println("Error closing client socket: " + ex.getMessage());
+            } catch (IOException e) {
+                System.err.println("Error closing client socket: " + e.getMessage());
             }
         }
     }
