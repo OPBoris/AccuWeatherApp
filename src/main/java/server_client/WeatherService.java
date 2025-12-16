@@ -36,7 +36,7 @@ public class WeatherService {
 
     public String searchCities(String partialName) {
         if (partialName == null || partialName.trim().length() < 2) {
-            return "";
+            return "ERROR: Query too short. Please enter at least 2 characters.";
         }
 
         String query = partialName.trim().toLowerCase();
