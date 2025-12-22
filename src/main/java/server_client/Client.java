@@ -1,10 +1,9 @@
 package server_client;
 
-import fhtw.accuweatherapp.UI;
-import javafx.application.Application;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Client {
     private static final String HOST = "localhost";
@@ -14,8 +13,10 @@ public class Client {
         System.out.println("--- Starting AccuWeather Test Client ---");
 
         try (
-                Socket socket = new Socket(HOST, SERVER_PORT)
-
+                Socket socket = new Socket(HOST, SERVER_PORT);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                Scanner scanner = new Scanner(System.in)
         ) {
             System.out.println("Successfully connected to server at " + HOST + ":" + SERVER_PORT);
             System.out.println("Enter command (e.g. PING, GET_WEATHER Belgrade, GET_HISTORY, QUIT):");

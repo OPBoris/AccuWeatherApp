@@ -43,16 +43,6 @@ public class ClientHandler implements Runnable {
                         writer.println("PONG");
                         break;
 
-                    case "SEARCH_CITIES":
-                        if (parts.length > 1) {
-                            String partialName = parts[1].trim();
-                            String suggestions = weatherService.searchCities(partialName);
-                            writer.println("SUGGESTIONS:" + suggestions);
-                        } else {
-                            writer.println("SUGGESTIONS:");
-                        }
-                        break;
-
                     case "GET_WEATHER":
                         if (parts.length > 1) {
                             String args = parts[1].trim();
@@ -67,8 +57,7 @@ public class ClientHandler implements Runnable {
                                 unit = "C";
                                 city = args.substring(0, args.length() - 2).trim();
                             }
-
-                            String response = weatherService.getWeatherForCity(city, unit, username);
+                            String response = weatherService.getWeatherByCity(city, unit, username);
                             writer.println(response);
                         } else {
                             writer.println("ERROR: Missing city name");

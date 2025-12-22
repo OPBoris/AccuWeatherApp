@@ -3,6 +3,7 @@ package fhtw.accuweatherapp;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import server_client.WeatherService;
 
 public class UIController {
     @FXML
@@ -11,6 +12,14 @@ public class UIController {
     @FXML
     private TextArea txt_field_cur_weather;
 
+    private final WeatherService weatherService;
+    private String currentUnit = "C";
+    private String currentUser = "Guest";
+
+    public UIController() {
+        this.weatherService = new WeatherService();
+    }
+
     @FXML
     protected void onSafeFavourite() {
         txt_field_cur_weather.setText("Pressed on Favourite.");
@@ -18,28 +27,41 @@ public class UIController {
 
     @FXML
     protected void onMoritz() {
-        txt_field_cur_weather.setText("Pressed on Moritz.");
+        currentUser = "Moritz";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);
     }
 
     @FXML
     protected void onJan() {
-        txt_field_cur_weather.setText("Pressed on Jan.");
+        currentUser = "Jan";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);
     }
 
     @FXML
     protected void onBoris() {
-        txt_field_cur_weather.setText("Pressed on Boris.");
+        currentUser = "Boris";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);
     }
 
     @FXML
     protected void onSearch() {
         String city = txt_field_city.getText();
 
-        if (city != null && !city.trim().isEmpty()) {
-            txt_field_cur_weather.setText("Suche nach Wetter für: " + city);
-        } else {
-            txt_field_cur_weather.setText("Bitte geben Sie eine Stadt ein.");
+        if (city == null || city.trim().isEmpty()) {
+            txt_field_cur_weather.setText("Please enter a city name.");
+            return;
         }
+
+        txt_field_cur_weather.setText("Loading weather data for " + city + "...");
+
+        new Thread(() -> {
+            try {
+                String weatherData = weatherService.getWeatherByCity(city, currentUnit, currentUser);
+                javafx.application.Platform.runLater(() -> txt_field_cur_weather.setText(weatherData));
+            } catch (Exception e) {
+                javafx.application.Platform.runLater(() -> txt_field_cur_weather.setText("ERROR: " + e.getMessage()));
+            }
+        }).start();
     }
 
     @FXML
@@ -50,16 +72,23 @@ public class UIController {
 
     @FXML
     protected void onOffline() {
-        txt_field_cur_weather.setText("Pressed on Offline button.");
+        String history = weatherService.getRecentCities(currentUser);
+        if (history == null || history.isEmpty()) {
+            txt_field_cur_weather.setText("No history available for user: " + currentUser);
+        } else {
+            txt_field_cur_weather.setText("Recent searches for " + currentUser + ":\n\n" + history.replace(",", "\n"));
+        }
     }
 
     @FXML
     protected void onUnitC() {
-        txt_field_cur_weather.setText("Pressed on Unit C button.");
+        currentUnit = "C";
+        txt_field_cur_weather.setText("Temperature unit: Celsius");
     }
 
     @FXML
     protected void onUnitF() {
-        txt_field_cur_weather.setText("Pressed on Unit F button.");
+        currentUnit = "F";
+        txt_field_cur_weather.setText("Temperature unit: Fahrenheit");
     }
 }
