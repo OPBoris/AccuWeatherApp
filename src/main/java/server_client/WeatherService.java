@@ -5,10 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -59,25 +56,63 @@ public class WeatherService {
                 .collect(Collectors.joining(";"));
     }
 
+    public synchronized boolean addFavorite(String city, String username) {
+        String favFile = username + "_favorites.txt";
+        String cleanCity = formatCityName(city);
+
+        List<String> currentFavs = readListFromFile(favFile);
+        if (currentFavs.contains(cleanCity)) {
+            return true;
+        }
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, true))) {
+            writer.println(cleanCity);
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error saving favorite: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public synchronized boolean removeFavorite(String city, String username) {
+        String favFile = username + "_favorites.txt";
+        String cleanCity = formatCityName(city);
+
+        List<String> currentFavs = readListFromFile(favFile);
+        if (!currentFavs.contains(cleanCity)) {
+            return false;
+        }
+
+        currentFavs.remove(cleanCity);
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, false))) {
+            for (String fav : currentFavs) {
+                writer.println(fav);
+            }
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error removing favorite: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public String getFavorites(String username) {
+        String favFile = username + "_favorites.txt";
+        List<String> favs = readListFromFile(favFile);
+        return String.join(",", favs);
+    }
+
+
     public String getRecentCities(String username) {
         String historyFile = username + "_history.txt";
-        if (!Files.exists(Paths.get(historyFile))) {
-            return "";
-        }
+        List<String> allLines = readListFromFile(historyFile);
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(historyFile))) {
+        Collections.reverse(allLines);
 
-            List<String> allLines = reader.lines().collect(Collectors.toList());
-            Collections.reverse(allLines);
-
-            return allLines.stream()
-                    .distinct()
-                    .limit(MAX_HISTORY_ENTRIES)
-                    .collect(Collectors.joining(","));
-        } catch (IOException e) {
-            System.err.println("Error reading history: " + e.getMessage());
-            return "ERROR: History unavailable.";
-        }
+        return allLines.stream()
+                .distinct()
+                .limit(MAX_HISTORY_ENTRIES)
+                .collect(Collectors.joining(","));
     }
 
     // TODO: JAN bearbeiten was alles wird in history gespeichert, format etc.
@@ -90,6 +125,20 @@ public class WeatherService {
             writer.println(formattedCity);
         } catch (IOException e) {
             System.err.println("Error while writing to history: " + e.getMessage());
+        }
+    }
+
+    private List<String> readListFromFile(String fileName) {
+        if (!Files.exists(Paths.get(fileName))) {
+            return new ArrayList<>();
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            return reader.lines()
+                    .filter(line -> !line.trim().isEmpty())
+                    .collect(Collectors.toCollection(ArrayList::new));
+        } catch (IOException e) {
+            System.out.println("Error reading file " + fileName + ": " + e.getMessage());
+            return new ArrayList<>();
         }
     }
 

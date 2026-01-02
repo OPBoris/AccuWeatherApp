@@ -9,7 +9,7 @@ import java.net.Socket;
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final WeatherService weatherService;
-    private final User currentUser;
+    private User currentUser;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
@@ -33,20 +33,29 @@ public class ClientHandler implements Runnable {
 
                 String[] parts = clientMessage.trim().split("\\s+", 2);
                 String command = parts[0].toUpperCase();
+                String payload = (parts.length > 1) ? parts[1].trim() : "";
 
                 String username = currentUser.getUsername();
-
-                System.out.println("Received command: " + clientMessage);
+                System.out.println("Received command: " + command + " from " + username);
 
                 switch (command) {
                     case "PING":
                         writer.println("PONG");
                         break;
 
+                    case "LOGIN":
+                        if (!payload.isEmpty()) {
+                            this.currentUser = new RegisteredUser(payload);
+                            System.out.println("User logged in as: " + currentUser.getUsername());
+                            writer.println("Welcome " + currentUser.getUsername());
+                        } else {
+                            writer.println("ERROR: Missing username for login");
+                        }
+                        break;
+
                     case "SEARCH_CITIES":
-                        if (parts.length > 1) {
-                            String partialName = parts[1].trim();
-                            String suggestions = weatherService.searchCities(partialName);
+                        if (!payload.isEmpty()) {
+                            String suggestions = weatherService.searchCities(payload);
                             writer.println("SUGGESTIONS:" + suggestions);
                         } else {
                             writer.println("SUGGESTIONS:");
@@ -54,18 +63,16 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "GET_WEATHER":
-                        if (parts.length > 1) {
-                            String args = parts[1].trim();
-
-                            String city = args;
+                        if (!payload.isEmpty()) {
+                            String city = payload;
                             String unit = "C";
 
-                            if (args.toUpperCase().endsWith(" F")) {
+                            if (payload.toUpperCase().endsWith(" F")) {
                                 unit = "F";
-                                city = args.substring(0, args.length() - 2).trim();
-                            } else if (args.toUpperCase().endsWith(" C")) {
+                                city = payload.substring(0, payload.length() - 2).trim();
+                            } else if (payload.toUpperCase().endsWith(" C")) {
                                 unit = "C";
-                                city = args.substring(0, args.length() - 2).trim();
+                                city = payload.substring(0, payload.length() - 2).trim();
                             }
 
                             String response = weatherService.getWeatherForCity(city, unit, username);
@@ -73,6 +80,29 @@ public class ClientHandler implements Runnable {
                         } else {
                             writer.println("ERROR: Missing city name");
                         }
+                        break;
+
+                    case "ADD_FAVORITE":
+                        if (!payload.isEmpty()) {
+                            boolean success = weatherService.addFavorite(payload, username);
+                            writer.println(success ? "Favorite added" : "ERROR: Could not add favorite");
+                        } else {
+                            writer.println("ERROR: Missing city name for favorite");
+                        }
+                        break;
+
+                    case "REMOVE_FAVORITE":
+                        if (!payload.isEmpty()) {
+                            boolean success = weatherService.removeFavorite(payload, username);
+                            writer.println(success ? "OK: Favorite removed" : "ERROR: Favorite not found");
+                        } else {
+                            writer.println("ERROR: Missing city name");
+                        }
+                        break;
+
+                    case "GET_FAVORITES":
+                        String favorites = weatherService.getFavorites(username);
+                        writer.println("FAVORITES:" + favorites);
                         break;
 
                     case "GET_HISTORY":
