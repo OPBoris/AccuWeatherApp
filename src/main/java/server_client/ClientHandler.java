@@ -39,10 +39,6 @@ public class ClientHandler implements Runnable {
                 System.out.println("Received command: " + clientMessage);
 
                 switch (command) {
-                    case "PING":
-                        writer.println("PONG");
-                        break;
-
                     case "SEARCH_CITIES":
                         if (parts.length > 1) {
                             String partialName = parts[1].trim();
