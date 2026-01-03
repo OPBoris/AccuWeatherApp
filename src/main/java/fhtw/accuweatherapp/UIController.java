@@ -52,7 +52,6 @@ public class UIController {
     @FXML
     protected void onReport() {
         runCommand("GET_HISTORY");
-
     }
 
     @FXML
@@ -81,7 +80,11 @@ public class UIController {
         };
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
-            txt_field_cur_weather.setText(resp != null ? resp : "(keine Antwort)");
+            if(resp != null) {
+                txt_field_cur_weather.setText(resp);
+            } else {
+                txt_field_cur_weather.setText("Keine Antwort vom Server erhalten.");
+            }
         });
         task.setOnFailed(e -> txt_field_cur_weather.setText("Verbindungsfehler: " + task.getException().getMessage()));
         new Thread(task, "server-call").start();

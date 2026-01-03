@@ -31,8 +31,14 @@ public class ClientConnection implements Closeable {
     @Override
     public synchronized void close() throws IOException {
         try {
-            if (writer != null) writer.println("QUIT");
+            if (socket != null && socket.isConnected() && !socket.isClosed()) {
+                if (writer != null) {
+                    writer.println("QUIT");
+                }
+            }
         } catch (Exception ignored) {}
-        if (socket != null && !socket.isClosed()) socket.close();
+        if (socket != null && !socket.isClosed()) {
+            socket.close();
+        }
     }
 }
