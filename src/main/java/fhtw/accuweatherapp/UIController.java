@@ -14,6 +14,7 @@ public class UIController {
     private TextArea txt_field_cur_weather;
 
     private String unit = "C";
+    private String currentUser = "Guest";
 
     private final ClientConnection connection = new ClientConnection("localhost", 8080);
 
@@ -24,17 +25,20 @@ public class UIController {
 
     @FXML
     protected void onMoritz() {
-        txt_field_cur_weather.setText("Pressed on Moritz.");
+        currentUser = "Moritz";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);
     }
 
     @FXML
     protected void onJan() {
-        txt_field_cur_weather.setText("Pressed on Jan.");
+        currentUser = "Jan";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);
     }
 
     @FXML
     protected void onBoris() {
-        txt_field_cur_weather.setText("Pressed on Boris.");
+        currentUser = "Boris";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);
     }
 
     @FXML
@@ -62,7 +66,7 @@ public class UIController {
     @FXML
     protected void onUnitC() {
         unit = "C";
-        txt_field_cur_weather.setText("Unit °C");
+        txt_field_cur_weather.setText("Pressed on Unit C button.");
     }
 
     @FXML
