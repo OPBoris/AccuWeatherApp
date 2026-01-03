@@ -9,12 +9,14 @@ import java.net.Socket;
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final WeatherService weatherService;
-    private final User currentUser;
+    private final String currentUser;
+    private String currentUnit;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         this.weatherService = new WeatherService();
-        this.currentUser = new GuestUser();
+        this.currentUser = "Guest";
+        this.currentUnit = "C";
         System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
         System.out.println("Client created: " + currentUser);
     }
@@ -34,12 +36,12 @@ public class ClientHandler implements Runnable {
                 String[] parts = clientMessage.trim().split("\\s+", 2);
                 String command = parts[0].toUpperCase();
 
-                String username = currentUser.getUsername();
+                //String username = currentUser.getUsername();
 
                 System.out.println("Received command: " + clientMessage);
 
                 switch (command) {
-                    case "SEARCH_CITIES":
+                  /*  case "SEARCH_CITIES":
                         if (parts.length > 1) {
                             String partialName = parts[1].trim();
                             String suggestions = weatherService.searchCities(partialName);
@@ -47,7 +49,7 @@ public class ClientHandler implements Runnable {
                         } else {
                             writer.println("SUGGESTIONS:");
                         }
-                        break;
+                        break;*/
 
                     case "GET_WEATHER":
                         if (parts.length > 1) {
@@ -64,17 +66,17 @@ public class ClientHandler implements Runnable {
                                 city = args.substring(0, args.length() - 2).trim();
                             }
 
-                            String response = weatherService.getWeatherForCity(city, unit, username);
+                            String response = weatherService.getWeatherByCity(city, currentUnit, currentUser);
                             writer.println(response);
                         } else {
                             writer.println("ERROR: Missing city name");
                         }
                         break;
 
-                    case "GET_HISTORY":
+                    /*case "GET_HISTORY":
                         String history = weatherService.getRecentCities(username);
                         writer.println("HISTORY:" + history);
-                        break;
+                        break;*/
 
                     case "QUIT":
                         writer.println("BYE");
@@ -89,7 +91,7 @@ public class ClientHandler implements Runnable {
             System.err.println("Error in communication with the client: " + e.getMessage());
         } finally {
             try {
-                System.out.println("Connection closed for user: " + currentUser.getUsername());
+                //System.out.println("Connection closed for user: " + currentUser.getUsername());
                 clientSocket.close();
             } catch (IOException e) {
                 System.err.println("Error closing client socket: " + e.getMessage());
