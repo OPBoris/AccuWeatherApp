@@ -1,9 +1,10 @@
 package fhtw.accuweatherapp;
 
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import server_client.WeatherService;
+import server_client.ClientConnection;
 
 public class UIController {
     @FXML
@@ -12,13 +13,10 @@ public class UIController {
     @FXML
     private TextArea txt_field_cur_weather;
 
-    private final WeatherService weatherService;
-    private String currentUnit = "C";
+    private String unit = "C";
     private String currentUser = "Guest";
 
-    public UIController() {
-        this.weatherService = new WeatherService();
-    }
+    private final ClientConnection connection = new ClientConnection("localhost", 8080);
 
     @FXML
     protected void onSafeFavourite() {
@@ -47,48 +45,52 @@ public class UIController {
     protected void onSearch() {
         String city = txt_field_city.getText();
 
-        if (city == null || city.trim().isEmpty()) {
-            txt_field_cur_weather.setText("Please enter a city name.");
-            return;
+        if (city != null && !city.trim().isEmpty()) {
+            txt_field_cur_weather.setText("Suche nach Wetter für: " + city);
+            runCommand("GET_WEATHER " + city.trim() + " " + unit);
+        } else {
+            txt_field_cur_weather.setText("Bitte geben Sie eine Stadt ein.");
         }
-
-        txt_field_cur_weather.setText("Loading weather data for " + city + "...");
-
-        new Thread(() -> {
-            try {
-                String weatherData = weatherService.getWeatherByCity(city, currentUnit, currentUser);
-                javafx.application.Platform.runLater(() -> txt_field_cur_weather.setText(weatherData));
-            } catch (Exception e) {
-                javafx.application.Platform.runLater(() -> txt_field_cur_weather.setText("ERROR: " + e.getMessage()));
-            }
-        }).start();
     }
 
     @FXML
     protected void onReport() {
-        txt_field_cur_weather.setText("Pressed on Report button.");
-
+        runCommand("GET_HISTORY");
     }
 
     @FXML
     protected void onOffline() {
-        String history = weatherService.getRecentCities(currentUser);
-        if (history == null || history.isEmpty()) {
-            txt_field_cur_weather.setText("No history available for user: " + currentUser);
-        } else {
-            txt_field_cur_weather.setText("Recent searches for " + currentUser + ":\n\n" + history.replace(",", "\n"));
-        }
+        txt_field_cur_weather.setText("Pressed on Offline button.");
     }
 
     @FXML
     protected void onUnitC() {
-        currentUnit = "C";
-        txt_field_cur_weather.setText("Temperature unit: Celsius");
+        unit = "C";
+        txt_field_cur_weather.setText("Pressed on Unit C button.");
     }
 
     @FXML
     protected void onUnitF() {
-        currentUnit = "F";
-        txt_field_cur_weather.setText("Temperature unit: Fahrenheit");
+        unit = "F";
+        txt_field_cur_weather.setText("Unit °F.");
+    }
+
+    private void runCommand(String command) {
+        txt_field_cur_weather.setText("Sende: " + command + " ...");
+        Task<String> task = new Task<>() {
+            @Override protected String call() throws Exception {
+                return connection.sendCommand(command);
+            }
+        };
+        task.setOnSucceeded(e -> {
+            String resp = task.getValue();
+            if(resp != null) {
+                txt_field_cur_weather.setText(resp);
+            } else {
+                txt_field_cur_weather.setText("Keine Antwort vom Server erhalten.");
+            }
+        });
+        task.setOnFailed(e -> txt_field_cur_weather.setText("Verbindungsfehler: " + task.getException().getMessage()));
+        new Thread(task, "server-call").start();
     }
 }
