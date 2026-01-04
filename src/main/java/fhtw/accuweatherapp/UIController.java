@@ -14,7 +14,9 @@ public class UIController {
     private TextArea txt_field_cur_weather;
 
     private String unit = "C";
-    private String currentUser = "Guest";
+    private boolean humidityChecked = false;
+    private boolean windChecked = false;
+    private boolean feelsLikeChecked = false;
 
     private final ClientConnection connection = new ClientConnection("localhost", 8080);
 
@@ -25,22 +27,16 @@ public class UIController {
 
     @FXML
     protected void onMoritz() {
-        /*currentUser = "Moritz";
-        txt_field_cur_weather.setText("User switched to: " + currentUser);*/
         runCommand("MORITZ");
     }
 
     @FXML
     protected void onJan() {
-        /*currentUser = "Jan";
-        txt_field_cur_weather.setText("User switched to: " + currentUser);*/
         runCommand("JAN");
     }
 
     @FXML
     protected void onBoris() {
-        /*currentUser = "Boris";
-        txt_field_cur_weather.setText("User switched to: " + currentUser);*/
         runCommand("BORIS");
     }
 
@@ -76,6 +72,36 @@ public class UIController {
     protected void onUnitF() {
         unit = "F";
         txt_field_cur_weather.setText("Unit °F.");
+    }
+
+    @FXML
+    protected void onCheckFeelsLike() {
+        feelsLikeChecked = !feelsLikeChecked;
+        if (feelsLikeChecked) {
+            txt_field_cur_weather.setText("Checked Feels Like.");
+        } else {
+            txt_field_cur_weather.setText("Unchecked Feels Like.");
+        }
+    }
+
+    @FXML
+    protected void onCheckHumidity() {
+        humidityChecked = !humidityChecked;
+        if (humidityChecked) {
+            txt_field_cur_weather.setText("Checked Humidity.");
+        } else {
+            txt_field_cur_weather.setText("Unchecked Humidity.");
+        }
+    }
+
+    @FXML
+    protected void onCheckWind() {
+        windChecked = !windChecked;
+        if (windChecked) {
+            txt_field_cur_weather.setText("Checked Wind.");
+        } else {
+            txt_field_cur_weather.setText("Unchecked Wind.");
+        }
     }
 
     private void runCommand(String command) {

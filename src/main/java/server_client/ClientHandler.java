@@ -1,5 +1,9 @@
 package server_client;
 
+import user.GuestUser;
+import user.RegularUser;
+import user.User;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -39,8 +43,7 @@ public class ClientHandler implements Runnable {
                 String[] parts = clientMessage.trim().split("\\s+", 2);
                 String command = parts[0].toUpperCase();
 
-                //String username = currentUser.getUsername();
-
+                //Just for debugging purposes
                 System.out.println("Received command: " + clientMessage);
 
                 switch (command) {
@@ -58,8 +61,7 @@ public class ClientHandler implements Runnable {
                                 city = args.substring(0, args.length() - 2).trim();
                             }
 
-                            String user = currentUser.getUsername();
-                            String response = weatherService.getWeatherByCity(city, currentUnit, user);
+                            String response = weatherService.getWeatherByCity(city, currentUnit, currentUser.getUsername());
                             writer.println(response);
                             writer.println("###END###");
                         } else {
@@ -68,10 +70,11 @@ public class ClientHandler implements Runnable {
                         }
                         break;
 
-                    /*case "GET_HISTORY":
-                        String history = weatherService.getRecentCities(username);
+                    case "GET_HISTORY":
+                        String history = weatherService.getRecentCities(currentUser.getUsername());
                         writer.println("HISTORY:" + history);
-                        break;*/
+                        writer.println("###END###");
+                        break;
 
                     case "MORITZ":
                         currentUser = Moritz;
@@ -101,7 +104,6 @@ public class ClientHandler implements Runnable {
             System.err.println("Error in communication with the client: " + e.getMessage());
         } finally {
             try {
-                //System.out.println("Connection closed for user: " + currentUser.getUsername());
                 clientSocket.close();
             } catch (IOException e) {
                 System.err.println("Error closing client socket: " + e.getMessage());

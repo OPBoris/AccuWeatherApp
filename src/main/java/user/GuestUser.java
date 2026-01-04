@@ -1,6 +1,6 @@
-package server_client;
+package user;
 
-public class GuestUser extends User{
+public class GuestUser extends User {
 
     public GuestUser() {
         super("Guest_" + System.currentTimeMillis());

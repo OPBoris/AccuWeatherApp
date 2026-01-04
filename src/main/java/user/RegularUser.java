@@ -1,4 +1,4 @@
-package server_client;
+package user;
 
 public class RegularUser extends User {
 
