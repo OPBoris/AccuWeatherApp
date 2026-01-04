@@ -9,13 +9,16 @@ import java.net.Socket;
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final WeatherService weatherService;
-    private final String currentUser;
+    private User currentUser;
+    private final User Moritz = new RegularUser("Moritz");
+    private final User Jan = new RegularUser("Jan");
+    private final User Boris = new RegularUser("Boris");
     private String currentUnit;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         this.weatherService = new WeatherService();
-        this.currentUser = "Guest";
+        this.currentUser = new GuestUser();
         this.currentUnit = "C";
         System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
         System.out.println("Client created: " + currentUser);
@@ -41,35 +44,27 @@ public class ClientHandler implements Runnable {
                 System.out.println("Received command: " + clientMessage);
 
                 switch (command) {
-                  /*  case "SEARCH_CITIES":
-                        if (parts.length > 1) {
-                            String partialName = parts[1].trim();
-                            String suggestions = weatherService.searchCities(partialName);
-                            writer.println("SUGGESTIONS:" + suggestions);
-                        } else {
-                            writer.println("SUGGESTIONS:");
-                        }
-                        break;*/
-
                     case "GET_WEATHER":
                         if (parts.length > 1) {
                             String args = parts[1].trim();
 
                             String city = args;
-                            String unit = "C";
 
                             if (args.toUpperCase().endsWith(" F")) {
-                                unit = "F";
+                                currentUnit = "F";
                                 city = args.substring(0, args.length() - 2).trim();
                             } else if (args.toUpperCase().endsWith(" C")) {
-                                unit = "C";
+                                currentUnit = "C";
                                 city = args.substring(0, args.length() - 2).trim();
                             }
 
-                            String response = weatherService.getWeatherByCity(city, currentUnit, currentUser);
+                            String user = currentUser.getUsername();
+                            String response = weatherService.getWeatherByCity(city, currentUnit, user);
                             writer.println(response);
+                            writer.println("###END###");
                         } else {
                             writer.println("ERROR: Missing city name");
+                            writer.println("###END###");
                         }
                         break;
 
@@ -78,12 +73,27 @@ public class ClientHandler implements Runnable {
                         writer.println("HISTORY:" + history);
                         break;*/
 
-                    case "QUIT":
-                        writer.println("BYE");
-                        return;
+                    case "MORITZ":
+                        currentUser = Moritz;
+                        writer.println("User switched to: " + currentUser.getUsername());
+                        writer.println("###END###");
+                        break;
+
+                    case "JAN":
+                        currentUser = Jan;
+                        writer.println("User switched to: " + currentUser.getUsername());
+                        writer.println("###END###");
+                        break;
+
+                    case "BORIS":
+                        currentUser = Boris;
+                        writer.println("User switched to: " + currentUser.getUsername());
+                        writer.println("###END###");
+                        break;
 
                     default:
                         writer.println("ERROR: Unknown command '" + command + "'");
+                        writer.println("###END###");
                         break;
                 }
             }

@@ -25,20 +25,23 @@ public class UIController {
 
     @FXML
     protected void onMoritz() {
-        currentUser = "Moritz";
-        txt_field_cur_weather.setText("User switched to: " + currentUser);
+        /*currentUser = "Moritz";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);*/
+        runCommand("MORITZ");
     }
 
     @FXML
     protected void onJan() {
-        currentUser = "Jan";
-        txt_field_cur_weather.setText("User switched to: " + currentUser);
+        /*currentUser = "Jan";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);*/
+        runCommand("JAN");
     }
 
     @FXML
     protected void onBoris() {
-        currentUser = "Boris";
-        txt_field_cur_weather.setText("User switched to: " + currentUser);
+        /*currentUser = "Boris";
+        txt_field_cur_weather.setText("User switched to: " + currentUser);*/
+        runCommand("BORIS");
     }
 
     @FXML
@@ -90,7 +93,14 @@ public class UIController {
                 txt_field_cur_weather.setText("Keine Antwort vom Server erhalten.");
             }
         });
-        task.setOnFailed(e -> txt_field_cur_weather.setText("Verbindungsfehler: " + task.getException().getMessage()));
+        task.setOnFailed(e -> {
+            Throwable exception = task.getException();
+            if (exception != null) {
+                txt_field_cur_weather.setText("Verbindungsfehler: " + exception.getMessage());
+            } else {
+                txt_field_cur_weather.setText("Verbindungsfehler: Unbekannter Fehler");
+            }
+        });
         new Thread(task, "server-call").start();
     }
 }
