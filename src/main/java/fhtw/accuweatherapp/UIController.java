@@ -2,26 +2,19 @@ package fhtw.accuweatherapp;
 
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import server_client.ClientConnection;
 
 import java.util.List;
 
 public class UIController {
-    @FXML
-    private TextField txt_field_city;
-
-    @FXML
-    private TextArea txt_field_cur_weather;
-
-    @FXML
-    private ComboBox<String> combox_last_used;
-
-    @FXML
-    private MenuButton menu_user;
+    @FXML private TextField txt_field_city;
+    @FXML private TextArea txt_field_cur_weather;
+    @FXML private ComboBox<String> combox_last_used;
+    @FXML private MenuButton menu_user;
+    @FXML private CheckBox check_feels_like;
+    @FXML private CheckBox check_humidity;
+    @FXML private CheckBox check_wind;
 
     private String unit = "C";
     private boolean humidityChecked = false;
@@ -49,23 +42,17 @@ public class UIController {
 
     @FXML
     protected void onMoritz() {
-        runCommand("MORITZ");
-        updateCityComboBox();
-        menu_user.setText("Moritz");
+        switchUser("MORITZ");
     }
 
     @FXML
     protected void onJan() {
-        runCommand("JAN");
-        updateCityComboBox();
-        menu_user.setText("Jan");
+        switchUser("JAN");
     }
 
     @FXML
     protected void onBoris() {
-        runCommand("BORIS");
-        updateCityComboBox();
-        menu_user.setText("Boris");
+        switchUser("BORIS");
     }
 
     @FXML
@@ -106,31 +93,19 @@ public class UIController {
     @FXML
     protected void onCheckFeelsLike() {
         feelsLikeChecked = !feelsLikeChecked;
-        if (feelsLikeChecked) {
-            txt_field_cur_weather.setText("Checked Feels Like.");
-        } else {
-            txt_field_cur_weather.setText("Unchecked Feels Like.");
-        }
+        runCommandAndRefresh("CHECK_FEELS_LIKE");
     }
 
     @FXML
     protected void onCheckHumidity() {
         humidityChecked = !humidityChecked;
-        if (humidityChecked) {
-            txt_field_cur_weather.setText("Checked Humidity.");
-        } else {
-            txt_field_cur_weather.setText("Unchecked Humidity.");
-        }
+        runCommandAndRefresh("CHECK_HUMIDITY");
     }
 
     @FXML
     protected void onCheckWind() {
         windChecked = !windChecked;
-        if (windChecked) {
-            txt_field_cur_weather.setText("Checked Wind.");
-        } else {
-            txt_field_cur_weather.setText("Unchecked Wind.");
-        }
+        runCommandAndRefresh("CHECK_WIND");
     }
 
     private void updateCityComboBox() {
@@ -192,5 +167,79 @@ public class UIController {
             }
         });
         new Thread(task, "server-call").start();
+    }
+
+    private void runCommandAndRefresh(String command) {
+        Task<String> task = new Task<>() {
+            @Override protected String call() throws Exception {
+                String resp = connection.sendCommand(command);
+
+                String city = txt_field_city.getText();
+                if (city != null && !city.trim().isEmpty()) {
+                    return connection.sendCommand("GET_WEATHER " + city.trim() + " " + unit);
+                }
+                return resp;
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            String resp = task.getValue();
+            if(resp != null) {
+                txt_field_cur_weather.setText(resp);
+            }
+        });
+
+        new Thread(task).start();
+    }
+
+    private void switchUser(String command) {
+        txt_field_cur_weather.setText("Wechsle Nutzer...");
+
+        Task<String> task = new Task<>() {
+            @Override protected String call() throws Exception {
+                return connection.sendCommand(command);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            String response = task.getValue();
+
+            if (response != null && response.startsWith("SETTINGS;")) {
+                String[] parts = response.split(";");
+                if (parts.length >= 5) {
+                    String username = parts[1];
+                    boolean showHum = Boolean.parseBoolean(parts[2]);
+                    boolean showWind = Boolean.parseBoolean(parts[3]);
+                    boolean showFeels = Boolean.parseBoolean(parts[4]);
+
+                    menu_user.setText(username);
+                    updateCityComboBox();
+                    txt_field_cur_weather.setText("User switched to: " + username);
+
+                    this.humidityChecked = showHum;
+                    if(check_humidity != null) check_humidity.setSelected(showHum);
+
+                    this.windChecked = showWind;
+                    if(check_wind != null) check_wind.setSelected(showWind);
+
+                    this.feelsLikeChecked = showFeels;
+                    if(check_feels_like != null) check_feels_like.setSelected(showFeels);
+
+                    refreshWeatherIfPossible();
+                }
+            } else {
+                txt_field_cur_weather.setText(response);
+            }
+        });
+
+        task.setOnFailed(e -> txt_field_cur_weather.setText("Error user switching."));
+        new Thread(task).start();
+    }
+
+    private void refreshWeatherIfPossible() {
+        String city = txt_field_city.getText();
+        if (city != null && !city.trim().isEmpty()) {
+            runCommand("GET_WEATHER " + city.trim() + " " + unit);
+        }
     }
 }

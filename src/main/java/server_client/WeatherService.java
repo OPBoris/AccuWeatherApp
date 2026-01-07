@@ -55,7 +55,7 @@ public class WeatherService {
      * @param unit "C" or "F"
      * @return Weather data as String
      */
-    public String getCurrentWeather(double lat, double lon, String unit) {
+    public String getCurrentWeather(double lat, double lon, String unit, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
             String urlString = String.format(Locale.US, CURRENT_WEATHER_URL, lat, lon, apiKey);
             JsonNode data = makeApiCall(urlString);
@@ -83,10 +83,16 @@ public class WeatherService {
 
             sb.append(String.format("CURRENT WEATHER:\n"));
             sb.append(String.format("Temperature: %.1f %s\n", temp, unit));
-            sb.append(String.format("Feels like: %.1f %s\n", feelsLike, unit));
+            if (showFeelsLike) {
+                sb.append(String.format("Feels like: %.1f %s\n", feelsLike, unit));
+            }
             sb.append(String.format("Description: %s\n", description));
-            sb.append(String.format("Humidity: %d%%\n", humidity));
-            sb.append(String.format("Wind: %.1f m/s\n", windSpeed));
+            if (showHumidity) {
+                sb.append(String.format("Humidity: %d%%\n", humidity));
+            }
+            if (showWind) {
+                sb.append(String.format("Wind: %.1f m/s\n", windSpeed));
+            }
 
             return sb.toString();
         } catch (Exception e) {
@@ -147,7 +153,7 @@ public class WeatherService {
      * @param username Username for history (optional)
      * @return String with all weather data (current + forecast)
      */
-    public String getWeatherByCity(String cityName, String unit, String username) {
+    public String getWeatherByCity(String cityName, String unit, String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
             // Step 1: Get coordinates for the city
             System.out.println("Looking for coordinates: " + cityName);
@@ -165,7 +171,7 @@ public class WeatherService {
             System.out.println("City found: " + cityNameReal + ", " + country + " (Lat: " + lat + ", Lon: " + lon + ")");
 
             // Step 2: Get current weather + forecast
-            String currentWeather = getCurrentWeather(lat, lon, unit);
+            String currentWeather = getCurrentWeather(lat, lon, unit, showHumidity, showWind, showFeelsLike);
             String forecast = getForecast(lat, lon, unit);
 
             // Step 3: Save city to history
@@ -292,5 +298,48 @@ public class WeatherService {
             System.err.println("Error while reading CSV database: " + e.getMessage());
             return "ERROR: History unavailable.";
         }
+    }
+
+    public void saveUserSettings(String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
+        if (username == null || username.isEmpty() || username.equalsIgnoreCase("Guest")) return;
+
+        String filename = DB_FOLDER + "/settings_" + username + ".csv";
+        try {
+            File dbFolder = new File(DB_FOLDER);
+
+            try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+                writer.println("showHumidity,showWind,showFeelsLike");
+                writer.println(showHumidity + "," + showWind + "," + showFeelsLike);
+            }
+        } catch (IOException e) {
+            System.err.println("Error saving user settings: " + e.getMessage());
+        }
+    }
+
+    public boolean[] loadUserSettings(String username) {
+        boolean[] settings = {false, false, false};
+
+        if (username == null || username.isEmpty()) return settings;
+
+        String filename = DB_FOLDER + "/settings_" + username + ".csv";
+        File file = new File(filename);
+
+        if (file.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                reader.readLine();
+                String line = reader.readLine();
+                if (line != null) {
+                    String[] parts = line.split(",");
+                    if (parts.length >= 3) {
+                        settings[0] = Boolean.parseBoolean(parts[0]);
+                        settings[1] = Boolean.parseBoolean(parts[1]);
+                        settings[2] = Boolean.parseBoolean(parts[2]);
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Error loading settings for " + username + ": " + e.getMessage());
+            }
+        }
+        return settings;
     }
 }

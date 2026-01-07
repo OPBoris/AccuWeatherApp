@@ -18,6 +18,9 @@ public class ClientHandler implements Runnable {
     private final User Jan = new RegularUser("Jan");
     private final User Boris = new RegularUser("Boris");
     private String currentUnit;
+    private boolean showHumidity = false;
+    private boolean showWind = false;
+    private boolean showFeelsLike = false;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
@@ -26,6 +29,26 @@ public class ClientHandler implements Runnable {
         this.currentUnit = "C";
         System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
         System.out.println("Client created: " + currentUser);
+    }
+
+    private void loadSettingsForCurrentUser() {
+        if (currentUser instanceof GuestUser) {
+            showHumidity = false;
+            showWind = false;
+            showFeelsLike = false;
+        } else {
+            boolean[] settings = weatherService.loadUserSettings(currentUser.getUsername());
+            showHumidity = settings[0];
+            showWind = settings[1];
+            showFeelsLike = settings[2];
+            System.out.println("Loaded settings for " + currentUser.getUsername() + ": H=" + showHumidity + ", W=" + showWind + ", FL=" + showFeelsLike);
+        }
+    }
+
+    private void saveSettingsForCurrentUser() {
+        if (!(currentUser instanceof GuestUser)) {
+            weatherService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike);
+        }
     }
 
     @Override
@@ -61,7 +84,7 @@ public class ClientHandler implements Runnable {
                                 city = args.substring(0, args.length() - 2).trim();
                             }
 
-                            String response = weatherService.getWeatherByCity(city, currentUnit, currentUser.getUsername());
+                            String response = weatherService.getWeatherByCity(city, currentUnit, currentUser.getUsername(), showHumidity, showWind, showFeelsLike);
                             writer.println(response);
                             writer.println("###END###");
                         } else {
@@ -78,19 +101,43 @@ public class ClientHandler implements Runnable {
 
                     case "MORITZ":
                         currentUser = Moritz;
-                        writer.println("User switched to: " + currentUser.getUsername());
+                        loadSettingsForCurrentUser();
+                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" + showWind + ";" + showFeelsLike);
                         writer.println("###END###");
                         break;
 
                     case "JAN":
                         currentUser = Jan;
-                        writer.println("User switched to: " + currentUser.getUsername());
+                        loadSettingsForCurrentUser();
+                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" + showWind + ";" + showFeelsLike);
                         writer.println("###END###");
                         break;
 
                     case "BORIS":
                         currentUser = Boris;
-                        writer.println("User switched to: " + currentUser.getUsername());
+                        loadSettingsForCurrentUser();
+                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" + showWind + ";" + showFeelsLike);
+                        writer.println("###END###");
+                        break;
+
+                    case "CHECK_WIND":
+                        showWind = !showWind;
+                        saveSettingsForCurrentUser();
+                        writer.println("OK: showWind=" + showWind);
+                        writer.println("###END###");
+                        break;
+
+                    case "CHECK_HUMIDITY":
+                        showHumidity = !showHumidity;
+                        saveSettingsForCurrentUser();
+                        writer.println("OK: showWind=" + showWind);
+                        writer.println("###END###");
+                        break;
+
+                    case "CHECK_FEELS_LIKE":
+                        showFeelsLike = !showFeelsLike;
+                        saveSettingsForCurrentUser();
+                        writer.println("OK: showWind=" + showWind);
                         writer.println("###END###");
                         break;
 
