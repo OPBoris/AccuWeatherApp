@@ -112,9 +112,14 @@
                   </CheckBox>
                   <CheckBox fx:id="check_wind" mnemonicParsing="false" onAction="#onCheckWind" text="Wind">
                      <HBox.margin>
-                        <Insets top="8.5" />
+                        <Insets right="10.0" top="8.5" />
                      </HBox.margin>
                   </CheckBox>
+                  <Button fx:id="btn_uimode" mnemonicParsing="false" onAction="#onuimode" prefHeight="26.0" prefWidth="52.0" style="-fx-background-color: black;" text="Black" textFill="WHITE">
+                     <HBox.margin>
+                        <Insets top="5.0" />
+                     </HBox.margin>
+                  </Button>
                </children>
             </HBox>
          </children>

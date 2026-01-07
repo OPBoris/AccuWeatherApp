@@ -60,11 +60,11 @@ public class UIController {
         String city = txt_field_city.getText();
 
         if (city != null && !city.trim().isEmpty()) {
-            txt_field_cur_weather.setText("Suche nach Wetter für: " + city);
+            txt_field_cur_weather.setText("Searching for weather data for: " + city);
             runCommand("GET_WEATHER " + city.trim() + " " + unit);
             updateCityComboBox();
         } else {
-            txt_field_cur_weather.setText("Bitte geben Sie eine Stadt ein.");
+            txt_field_cur_weather.setText("Please enter a city.");
         }
     }
 
@@ -106,6 +106,11 @@ public class UIController {
     protected void onCheckWind() {
         windChecked = !windChecked;
         runCommandAndRefresh("CHECK_WIND");
+    }
+
+    @FXML
+    protected void onuimode() {
+        txt_field_cur_weather.setText("Pressed on UI Mode button.");
     }
 
     private void updateCityComboBox() {
