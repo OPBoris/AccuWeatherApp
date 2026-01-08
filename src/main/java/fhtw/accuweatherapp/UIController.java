@@ -81,13 +81,13 @@ public class UIController {
     @FXML
     protected void onUnitC() {
         unit = "C";
-        txt_field_cur_weather.setText("Pressed on Unit C button.");
+        runCommand("SET_UNIT C");
     }
 
     @FXML
     protected void onUnitF() {
         unit = "F";
-        txt_field_cur_weather.setText("Unit °F.");
+        runCommand("SET_UNIT F");
     }
 
     @FXML
@@ -111,6 +111,16 @@ public class UIController {
     @FXML
     protected void onuimode() {
         txt_field_cur_weather.setText("Pressed on UI Mode button.");
+    }
+
+    @FXML
+    protected void onsetasstandard() {
+        String city = txt_field_city.getText().trim();
+        if (!city.isEmpty()) {
+            runCommand("SET_STANDARD " + city.trim());
+        }else {
+            txt_field_cur_weather.setText("Bitte eine Stadt eingeben.");
+        }
     }
 
     private void updateCityComboBox() {
@@ -216,6 +226,15 @@ public class UIController {
                     boolean showHum = Boolean.parseBoolean(parts[2]);
                     boolean showWind = Boolean.parseBoolean(parts[3]);
                     boolean showFeels = Boolean.parseBoolean(parts[4]);
+                    String standardCity;
+                    if (parts.length > 5) {
+                        standardCity = parts[5];
+                    } else {
+                        standardCity = "";
+                    }
+                    if (parts.length > 6) {
+                        this.unit = parts[6];
+                    }
 
                     menu_user.setText(username);
                     updateCityComboBox();
@@ -230,7 +249,12 @@ public class UIController {
                     this.feelsLikeChecked = showFeels;
                     if(check_feels_like != null) check_feels_like.setSelected(showFeels);
 
-                    refreshWeatherIfPossible();
+                    if (!standardCity.isEmpty()) {
+                        txt_field_city.setText(standardCity);
+                        runCommand("GET_WEATHER " + standardCity + " " + unit);
+                    } else {
+                        refreshWeatherIfPossible();
+                    }
                 }
             } else {
                 txt_field_cur_weather.setText(response);

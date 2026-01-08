@@ -300,24 +300,53 @@ public class WeatherService {
         }
     }
 
-    public void saveUserSettings(String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
+    public void saveUserSettings(String username, boolean showHumidity, boolean showWind, boolean showFeelsLike,
+                                 String unit, String standardCity) {
         if (username == null || username.isEmpty() || username.equalsIgnoreCase("Guest")) return;
+
 
         String filename = DB_FOLDER + "/settings_" + username + ".csv";
         try {
             File dbFolder = new File(DB_FOLDER);
 
             try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-                writer.println("showHumidity,showWind,showFeelsLike");
-                writer.println(showHumidity + "," + showWind + "," + showFeelsLike);
+                writer.println("showHumidity,showWind,showFeelsLike,unit,standardCity");
+                writer.println(showHumidity + "," + showWind + "," + showFeelsLike + "," + unit+ "," + standardCity);
             }
         } catch (IOException e) {
             System.err.println("Error saving user settings: " + e.getMessage());
         }
     }
 
-    public boolean[] loadUserSettings(String username) {
-        boolean[] settings = {false, false, false};
+    public void setStandardCity(String username, String city) {
+        if (username == null || username.isEmpty() || username.equalsIgnoreCase("Guest")) return;
+
+        String filename = DB_FOLDER + "/settings_" + username + ".csv";
+        try {
+            File file = new File(filename);
+            String[] currentSettings = loadUserSettings(username);
+
+            try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+                writer.println("showHumidity,showWind,showFeelsLike,unit,standardCity");
+                writer.println(currentSettings[0] + "," + currentSettings[1] + "," + currentSettings[2] + "," + currentSettings[3] + "," + city);
+            }
+        } catch (IOException e) {
+            System.err.println("Error saving standard city: " + e.getMessage());
+        }
+    }
+
+    public String getStandardCity(String username) {
+        if (username == null || username.isEmpty()) return "";
+        String[] settings = loadUserSettings(username);
+        if (settings.length > 4 && settings[4] != null) {
+            return settings[4];
+        } else {
+            return "";
+        }
+    }
+
+    public String[] loadUserSettings(String username) {
+        String[] settings = {"false", "false", "false" , "C", ""};
 
         if (username == null || username.isEmpty()) return settings;
 
@@ -330,10 +359,14 @@ public class WeatherService {
                 String line = reader.readLine();
                 if (line != null) {
                     String[] parts = line.split(",");
-                    if (parts.length >= 3) {
-                        settings[0] = Boolean.parseBoolean(parts[0]);
-                        settings[1] = Boolean.parseBoolean(parts[1]);
-                        settings[2] = Boolean.parseBoolean(parts[2]);
+                    if (parts.length >= 4) {
+                        settings[0] = parts[0];
+                        settings[1] = parts[1];
+                        settings[2] = parts[2];
+                        settings[3] = parts[3];
+                    }
+                    if (parts.length >= 5) {
+                        settings[4] = parts[4];
                     }
                 }
             } catch (IOException e) {

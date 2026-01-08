@@ -18,6 +18,7 @@ public class ClientHandler implements Runnable {
     private final User Jan = new RegularUser("Jan");
     private final User Boris = new RegularUser("Boris");
     private String currentUnit;
+    private String standardCity = "";
     private boolean showHumidity = false;
     private boolean showWind = false;
     private boolean showFeelsLike = false;
@@ -36,18 +37,27 @@ public class ClientHandler implements Runnable {
             showHumidity = false;
             showWind = false;
             showFeelsLike = false;
+            currentUnit = "C";
+            standardCity = "";
         } else {
-            boolean[] settings = weatherService.loadUserSettings(currentUser.getUsername());
-            showHumidity = settings[0];
-            showWind = settings[1];
-            showFeelsLike = settings[2];
-            System.out.println("Loaded settings for " + currentUser.getUsername() + ": H=" + showHumidity + ", W=" + showWind + ", FL=" + showFeelsLike);
+            String[] settings = weatherService.loadUserSettings(currentUser.getUsername());
+            showHumidity = Boolean.parseBoolean(settings[0]);
+            showWind = Boolean.parseBoolean(settings[1]);
+            showFeelsLike = Boolean.parseBoolean(settings[2]);
+            currentUnit = settings[3];
+            if (settings.length > 4) {
+                standardCity = settings[4];
+            } else {
+                standardCity = "";
+            }
+            System.out.println("Loaded settings for " + currentUser.getUsername() + ": H=" + showHumidity + ", W="
+                    + showWind + ", FL=" + showFeelsLike + ", Unit=" + currentUnit + ", StandardCity=" + standardCity);
         }
     }
 
     private void saveSettingsForCurrentUser() {
         if (!(currentUser instanceof GuestUser)) {
-            weatherService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike);
+            weatherService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, standardCity);
         }
     }
 
@@ -102,21 +112,24 @@ public class ClientHandler implements Runnable {
                     case "MORITZ":
                         currentUser = Moritz;
                         loadSettingsForCurrentUser();
-                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" + showWind + ";" + showFeelsLike);
+                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";"
+                                + showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
                         writer.println("###END###");
                         break;
 
                     case "JAN":
                         currentUser = Jan;
                         loadSettingsForCurrentUser();
-                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" + showWind + ";" + showFeelsLike);
+                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";"
+                                + showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
                         writer.println("###END###");
                         break;
 
                     case "BORIS":
                         currentUser = Boris;
                         loadSettingsForCurrentUser();
-                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" + showWind + ";" + showFeelsLike);
+                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" +
+                                showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
                         writer.println("###END###");
                         break;
 
@@ -138,6 +151,35 @@ public class ClientHandler implements Runnable {
                         showFeelsLike = !showFeelsLike;
                         saveSettingsForCurrentUser();
                         writer.println("OK: showWind=" + showWind);
+                        writer.println("###END###");
+                        break;
+
+                    case "SET_UNIT":
+                        if (parts.length > 1) {
+                            String newUnit = parts[1].toUpperCase();
+                            if (newUnit.equals("C") || newUnit.equals("F")) {
+                                currentUnit = newUnit;
+                                saveSettingsForCurrentUser();
+                                writer.println("Unit set to " + newUnit);
+                            } else {
+                                writer.println("ERROR: Invalid unit");
+                            }
+                        }
+                        writer.println("###END###");
+                        break;
+
+                    case "SET_STANDARD":
+                        if (currentUser instanceof GuestUser) {
+                            writer.println("ERROR: Guest users cannot save settings.");
+                        }
+                        else if (parts.length > 1) {
+                            String newCity = parts[1].trim();
+                            this.standardCity = newCity;
+                            weatherService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, this.standardCity);
+                            writer.println("Standard city set to " + standardCity);
+                        } else {
+                            writer.println("ERROR: Missing city name");
+                        }
                         writer.println("###END###");
                         break;
 
