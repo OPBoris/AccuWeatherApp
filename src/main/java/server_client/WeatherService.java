@@ -11,6 +11,15 @@ import java.util.stream.Collectors;
 
 public class WeatherService {
     private static final int MAX_HISTORY_ENTRIES = 10;
+    private static final String DB_PATH = "src/main/DB/";
+
+    public WeatherService() {
+        try {
+            Files.createDirectories(Paths.get(DB_PATH));
+        } catch (IOException e) {
+            System.out.println("Error: The system cannot create the DB folder at the specified path.: " + DB_PATH + " -> " + e.getMessage());
+        }
+    }
 
     public String getWeatherForCity(String city, String unit, String username) {
 
@@ -57,7 +66,7 @@ public class WeatherService {
     }
 
     public synchronized boolean addFavorite(String city, String username) {
-        String favFile = username + "_favorites.txt";
+        String favFile = DB_PATH + username + "_favorites.txt";
         String cleanCity = formatCityName(city);
 
         List<String> currentFavs = readListFromFile(favFile);
@@ -75,7 +84,7 @@ public class WeatherService {
     }
 
     public synchronized boolean removeFavorite(String city, String username) {
-        String favFile = username + "_favorites.txt";
+        String favFile = DB_PATH + username + "_favorites.txt";
         String cleanCity = formatCityName(city);
 
         List<String> currentFavs = readListFromFile(favFile);
@@ -97,14 +106,14 @@ public class WeatherService {
     }
 
     public String getFavorites(String username) {
-        String favFile = username + "_favorites.txt";
+        String favFile = DB_PATH + username + "_favorites.txt";
         List<String> favs = readListFromFile(favFile);
         return String.join(",", favs);
     }
 
 
     public String getRecentCities(String username) {
-        String historyFile = username + "_history.txt";
+        String historyFile = DB_PATH + username + "_history.txt";
         List<String> allLines = readListFromFile(historyFile);
 
         Collections.reverse(allLines);
@@ -118,7 +127,7 @@ public class WeatherService {
     // TODO: JAN bearbeiten was alles wird in history gespeichert, format etc.
     private synchronized void saveToHistory(String city, String username) {
 
-        String historyFile = username + "_history.txt";
+        String historyFile = DB_PATH + username + "_history.txt";
         String formattedCity = formatCityName(city);
         String cityWithCountry = formattedCity + "," + mockCountry(formattedCity);
         try (PrintWriter writer = new PrintWriter(new FileWriter(historyFile, true))) {
