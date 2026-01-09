@@ -4,11 +4,9 @@ import user.GuestUser;
 import user.RegularUser;
 import user.User;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
@@ -61,12 +59,18 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private void sendMessage(BufferedWriter writer, String message) throws IOException {
+        writer.write(message);
+        writer.newLine();
+        writer.flush();
+    }
+
     @Override
     public void run() {
 
         try (
-                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)
+                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8))
         ) {
             String clientMessage;
 
@@ -95,63 +99,63 @@ public class ClientHandler implements Runnable {
                             }
 
                             String response = weatherService.getWeatherByCity(city, currentUnit, currentUser.getUsername(), showHumidity, showWind, showFeelsLike);
-                            writer.println(response);
-                            writer.println("###END###");
+                            sendMessage(writer, response);
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("ERROR: Missing city name");
-                            writer.println("###END###");
+                            sendMessage(writer, "ERROR: Missing city name");
+                            sendMessage(writer, "###END###");
                         }
                         break;
 
                     case "GET_HISTORY":
                         String history = weatherService.getRecentCities(currentUser.getUsername());
-                        writer.println("HISTORY:" + history);
-                        writer.println("###END###");
+                        sendMessage(writer, "HISTORY:" + history);
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "MORITZ":
                         currentUser = Moritz;
                         loadSettingsForCurrentUser();
-                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";"
+                        sendMessage(writer, "SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";"
                                 + showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
-                        writer.println("###END###");
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "JAN":
                         currentUser = Jan;
                         loadSettingsForCurrentUser();
-                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";"
+                        sendMessage(writer,"SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";"
                                 + showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
-                        writer.println("###END###");
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "BORIS":
                         currentUser = Boris;
                         loadSettingsForCurrentUser();
-                        writer.println("SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" +
+                        sendMessage(writer,"SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" +
                                 showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
-                        writer.println("###END###");
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "CHECK_WIND":
                         showWind = !showWind;
                         saveSettingsForCurrentUser();
-                        writer.println("OK: showWind=" + showWind);
-                        writer.println("###END###");
+                        sendMessage(writer,"OK: showWind=" + showWind);
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "CHECK_HUMIDITY":
                         showHumidity = !showHumidity;
                         saveSettingsForCurrentUser();
-                        writer.println("OK: showWind=" + showWind);
-                        writer.println("###END###");
+                        sendMessage(writer,"OK: showWind=" + showWind);
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "CHECK_FEELS_LIKE":
                         showFeelsLike = !showFeelsLike;
                         saveSettingsForCurrentUser();
-                        writer.println("OK: showWind=" + showWind);
-                        writer.println("###END###");
+                        sendMessage(writer,"OK: showWind=" + showWind);
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "SET_UNIT":
@@ -160,31 +164,31 @@ public class ClientHandler implements Runnable {
                             if (newUnit.equals("C") || newUnit.equals("F")) {
                                 currentUnit = newUnit;
                                 saveSettingsForCurrentUser();
-                                writer.println("Unit set to " + newUnit);
+                                sendMessage(writer,"Unit set to " + newUnit);
                             } else {
-                                writer.println("ERROR: Invalid unit");
+                                sendMessage(writer, "ERROR: Invalid unit");
                             }
                         }
-                        writer.println("###END###");
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "SET_STANDARD":
                         if (currentUser instanceof GuestUser) {
-                            writer.println("ERROR: Guest users cannot save settings.");
+                            sendMessage(writer,"ERROR: Guest users cannot save settings.");
                         }
                         else if (parts.length > 1) {
                             this.standardCity = parts[1].trim();
                             weatherService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, this.standardCity);
-                            writer.println("Standard city set to " + standardCity);
+                            sendMessage(writer,"Standard city set to " + standardCity);
                         } else {
-                            writer.println("ERROR: Missing city name");
+                            sendMessage(writer,"ERROR: Missing city name");
                         }
-                        writer.println("###END###");
+                        sendMessage(writer, "###END###");
                         break;
 
                     default:
-                        writer.println("ERROR: Unknown command '" + command + "'");
-                        writer.println("###END###");
+                        sendMessage(writer, "ERROR: Unknown command '" + command + "'");
+                        sendMessage(writer, "###END###");
                         break;
                 }
             }

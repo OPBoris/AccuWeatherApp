@@ -252,17 +252,20 @@ public class WeatherService {
             boolean isNewFile = !csvFile.exists();
 
             // Append to CSV file
-            try (PrintWriter writer = new PrintWriter(new FileWriter(csvFile, true))) {
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvFile, true), StandardCharsets.UTF_8))) {
                 // Write header if new file
                 if (isNewFile) {
-                    writer.println("timestamp,username,city");
+                    writer.write("timestamp,username,city");
+                    writer.newLine();
                 }
 
                 // Write data: timestamp,username,city
                 String timestamp = java.time.LocalDateTime.now().format(
                     java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                 );
-                writer.println(String.format("%s,%s,%s", timestamp, username, city.trim()));
+                String line = String.format("%s,%s,%s", timestamp, username, city.trim());
+                writer.write(line);
+                writer.newLine();
             }
 
         } catch (IOException e) {
@@ -281,7 +284,7 @@ public class WeatherService {
             return "";
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_8))) {
             List<String> cities = reader.lines()
                 .skip(1) // Skip header line
                 .map(line -> line.split(","))
@@ -310,9 +313,13 @@ public class WeatherService {
 
 
         String filename = DB_FOLDER + "/settings_" + username + ".csv";
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-            writer.println("showHumidity,showWind,showFeelsLike,unit,standardCity");
-            writer.println(showHumidity + "," + showWind + "," + showFeelsLike + "," + unit+ "," + standardCity);
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
+            writer.write("showHumidity,showWind,showFeelsLike,unit,standardCity");
+            writer.newLine();
+
+            String line = showHumidity + "," + showWind + "," + showFeelsLike + "," + unit+ "," + standardCity;
+            writer.write(line);
+            writer.newLine();
         } catch (IOException e) {
             System.err.println("Error saving user settings: " + e.getMessage());
         }
@@ -328,7 +335,7 @@ public class WeatherService {
         File file = new File(filename);
 
         if (file.exists()) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
                 reader.readLine();
                 String line = reader.readLine();
                 if (line != null) {
