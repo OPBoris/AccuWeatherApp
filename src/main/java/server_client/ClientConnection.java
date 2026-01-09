@@ -42,7 +42,6 @@ public class ClientConnection implements Closeable {
             }
 
             if (response.isEmpty()) {
-                connected = false;
                 throw new IOException("Server closed connection");
             }
             return response.trim();
@@ -70,7 +69,7 @@ public class ClientConnection implements Closeable {
     }
 
     @Override
-    public synchronized void close() throws IOException {
+    public synchronized void close() {
         connected = false;
         closeInternal();
     }

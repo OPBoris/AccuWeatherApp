@@ -3,9 +3,11 @@ package fhtw.accuweatherapp;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
 import server_client.ClientConnection;
 
 import java.util.List;
+import java.util.Objects;
 
 public class UIController {
     @FXML private TextField txt_field_city;
@@ -15,11 +17,14 @@ public class UIController {
     @FXML private CheckBox check_feels_like;
     @FXML private CheckBox check_humidity;
     @FXML private CheckBox check_wind;
+    @FXML private BorderPane main_pane;
+    @FXML private Button btn_uimode;
 
     private String unit = "C";
     private boolean humidityChecked = false;
     private boolean windChecked = false;
     private boolean feelsLikeChecked = false;
+    private boolean isDarkMode = false;
 
     private final ClientConnection connection = new ClientConnection("localhost", 8080);
 
@@ -110,7 +115,28 @@ public class UIController {
 
     @FXML
     protected void onuimode() {
-        txt_field_cur_weather.setText("Pressed on UI Mode button.");
+        isDarkMode = !isDarkMode;
+        if (isDarkMode) {
+            if (main_pane != null) {
+                main_pane.setStyle("-fx-base: #2b2b2b; -fx-control-inner-background: #2b2b2b; -fx-background: #2b2b2b;");
+            }
+
+            btn_uimode.setText("Light");
+            btn_uimode.setStyle("-fx-background-color: white; -fx-text-fill: black;");
+            txt_field_city.setStyle("-fx-text-fill: white; -fx-prompt-text-fill: #ffffff;");
+
+            txt_field_cur_weather.setText("Dark Mode aktiviert.");
+        }else {
+            if (main_pane != null) {
+                main_pane.setStyle("");
+            }
+
+            btn_uimode.setText("Dark");
+            btn_uimode.setStyle("-fx-background-color: black; -fx-text-fill: white;");
+            txt_field_city.setStyle("");
+
+            txt_field_cur_weather.setText("Light Mode aktiviert.");
+        }
     }
 
     @FXML
@@ -167,18 +193,14 @@ public class UIController {
         };
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
-            if(resp != null) {
-                txt_field_cur_weather.setText(resp);
-            } else {
-                txt_field_cur_weather.setText("Keine Antwort vom Server erhalten.");
-            }
+            txt_field_cur_weather.setText(Objects.requireNonNullElse(resp, "Didn't recieve a response from the server."));
         });
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
             if (exception != null) {
-                txt_field_cur_weather.setText("Verbindungsfehler: " + exception.getMessage());
+                txt_field_cur_weather.setText("Connection error: " + exception.getMessage());
             } else {
-                txt_field_cur_weather.setText("Verbindungsfehler: Unbekannter Fehler");
+                txt_field_cur_weather.setText("Connection error: Unknown error.");
             }
         });
         new Thread(task, "server-call").start();

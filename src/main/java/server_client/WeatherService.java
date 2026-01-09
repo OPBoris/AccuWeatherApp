@@ -81,7 +81,7 @@ public class WeatherService {
                 description = data.get("weather").get(0).get("description").asText();
             }
 
-            sb.append(String.format("CURRENT WEATHER:\n"));
+            sb.append("CURRENT WEATHER:\n");
             sb.append(String.format("Temperature: %.1f %s\n", temp, unit));
             if (showFeelsLike) {
                 sb.append(String.format("Feels like: %.1f %s\n", feelsLike, unit));
@@ -240,7 +240,11 @@ public class WeatherService {
             // Create DB folder if it doesn't exist
             File dbFolder = new File(DB_FOLDER);
             if (!dbFolder.exists()) {
-                dbFolder.mkdirs();
+                boolean success = dbFolder.mkdir();
+                if (!success) {
+                    System.err.println("Error: Could not create DB folder: " + DB_FOLDER);
+                    return;
+                }
             }
 
             // Create CSV file with header if it doesn't exist
@@ -306,44 +310,14 @@ public class WeatherService {
 
 
         String filename = DB_FOLDER + "/settings_" + username + ".csv";
-        try {
-            File dbFolder = new File(DB_FOLDER);
-
-            try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-                writer.println("showHumidity,showWind,showFeelsLike,unit,standardCity");
-                writer.println(showHumidity + "," + showWind + "," + showFeelsLike + "," + unit+ "," + standardCity);
-            }
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+            writer.println("showHumidity,showWind,showFeelsLike,unit,standardCity");
+            writer.println(showHumidity + "," + showWind + "," + showFeelsLike + "," + unit+ "," + standardCity);
         } catch (IOException e) {
             System.err.println("Error saving user settings: " + e.getMessage());
         }
     }
 
-    public void setStandardCity(String username, String city) {
-        if (username == null || username.isEmpty() || username.equalsIgnoreCase("Guest")) return;
-
-        String filename = DB_FOLDER + "/settings_" + username + ".csv";
-        try {
-            File file = new File(filename);
-            String[] currentSettings = loadUserSettings(username);
-
-            try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-                writer.println("showHumidity,showWind,showFeelsLike,unit,standardCity");
-                writer.println(currentSettings[0] + "," + currentSettings[1] + "," + currentSettings[2] + "," + currentSettings[3] + "," + city);
-            }
-        } catch (IOException e) {
-            System.err.println("Error saving standard city: " + e.getMessage());
-        }
-    }
-
-    public String getStandardCity(String username) {
-        if (username == null || username.isEmpty()) return "";
-        String[] settings = loadUserSettings(username);
-        if (settings.length > 4 && settings[4] != null) {
-            return settings[4];
-        } else {
-            return "";
-        }
-    }
 
     public String[] loadUserSettings(String username) {
         String[] settings = {"false", "false", "false" , "C", ""};

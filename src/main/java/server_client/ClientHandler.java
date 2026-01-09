@@ -173,8 +173,7 @@ public class ClientHandler implements Runnable {
                             writer.println("ERROR: Guest users cannot save settings.");
                         }
                         else if (parts.length > 1) {
-                            String newCity = parts[1].trim();
-                            this.standardCity = newCity;
+                            this.standardCity = parts[1].trim();
                             weatherService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, this.standardCity);
                             writer.println("Standard city set to " + standardCity);
                         } else {
