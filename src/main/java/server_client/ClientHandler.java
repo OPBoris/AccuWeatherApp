@@ -368,6 +368,29 @@ public class ClientHandler implements Runnable {
                         sendMessage(writer, "###END###");
                         break;
 
+                    case "GET_REPORT":
+                        if (parts.length > 1) {
+                            String args = parts[1].trim();
+                            String[] reportArgs = args.split("\\s+");
+
+                            if (reportArgs.length == 3) {
+                                String rCity = reportArgs[0];
+                                String rStart = reportArgs[1];
+                                String rEnd = reportArgs[2];
+
+                                String report = weatherService.getHistoricalReport(rCity, rStart, rEnd);
+                                writer.println(report.startsWith("ERROR")
+                                        ? report
+                                        : "REPORT_LATEX:" + report);
+                            } else {
+                                writer.println("ERROR: Format: GET_REPORT <City> <Start> <End>");
+                            }
+                        } else {
+                            writer.println("ERROR: Missing report arguments");
+                        }
+                        writer.println("###END###");
+                        break;
+
                     default:
                         sendMessage(writer, "ERROR: Unknown command '" + command + "'");
                         sendMessage(writer, "###END###");

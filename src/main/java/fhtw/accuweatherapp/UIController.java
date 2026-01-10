@@ -10,6 +10,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import server_client.ClientConnection;
+import server_client.ReportHandler;
 
 import java.util.List;
 import java.util.Objects;
@@ -257,6 +258,14 @@ public class UIController {
             // Show search history
             runCommand("GET_HISTORY");
         }
+
+        /*
+        String city = txt_field_city.getText();
+        String fullCommand = ReportHandler.showDateRangeDialog(city);
+        if (fullCommand != null) {
+            runCommand(fullCommand);
+        }
+         */
     }
 
     /**
