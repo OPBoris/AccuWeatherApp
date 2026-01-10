@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final WeatherService weatherService;
+    private final SettingsService settingsService;
     private User currentUser;
     private final User Moritz = new RegularUser("Moritz");
     private final User Jan = new RegularUser("Jan");
@@ -24,6 +25,7 @@ public class ClientHandler implements Runnable {
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         this.weatherService = new WeatherService();
+        this.settingsService = new SettingsService();
         this.currentUser = new GuestUser();
         this.currentUnit = "C";
         System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
@@ -38,7 +40,7 @@ public class ClientHandler implements Runnable {
             currentUnit = "C";
             standardCity = "";
         } else {
-            String[] settings = weatherService.loadUserSettings(currentUser.getUsername());
+            String[] settings = settingsService.loadUserSettings(currentUser.getUsername());
             showHumidity = Boolean.parseBoolean(settings[0]);
             showWind = Boolean.parseBoolean(settings[1]);
             showFeelsLike = Boolean.parseBoolean(settings[2]);
@@ -55,7 +57,7 @@ public class ClientHandler implements Runnable {
 
     private void saveSettingsForCurrentUser() {
         if (!(currentUser instanceof GuestUser)) {
-            weatherService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, standardCity);
+            settingsService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, standardCity);
         }
     }
 
@@ -178,7 +180,7 @@ public class ClientHandler implements Runnable {
                         }
                         else if (parts.length > 1) {
                             this.standardCity = parts[1].trim();
-                            weatherService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, this.standardCity);
+                            settingsService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, this.standardCity);
                             sendMessage(writer,"Standard city set to " + standardCity);
                         } else {
                             sendMessage(writer,"ERROR: Missing city name");
