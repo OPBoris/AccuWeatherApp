@@ -40,20 +40,23 @@ public class WeatherService {
         this.offlineService = new OfflineWeatherService();
     }
 
-    // =====================================================
-    // GEOCODING
-    // =====================================================
-
+    /**
+     * Geocoding: Get coordinates for a city
+     * @param city City name (optional: ",Country" e.g. "Berlin,DE")
+     * @return JsonNode with "lat" and "lon" or null
+     */
     public JsonNode getCoordinatesForCity(String city) throws Exception {
         return geocodingService.getCoordinates(city);
     }
 
-    // =====================================================
-    // CURRENT WEATHER
-    // =====================================================
-
-    public String getCurrentWeather(double lat, double lon, String unit,
-                                    boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+    /**
+     * Get current weather data using FREE API 2.5
+     * @param lat Latitude
+     * @param lon Longitude
+     * @param unit "C" or "F"
+     * @return Weather data as String
+     */
+    public String getCurrentWeather(double lat, double lon, String unit, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
             String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
             String url = String.format(CURRENT_WEATHER_URL, lat, lon, tempUnit);
@@ -62,14 +65,78 @@ public class WeatherService {
         } catch (Exception e) {
             return "ERROR: " + e.getMessage();
         }
+    }/*  ----------in currentweather klasse-----------
+            sb.append("CURRENT WEATHER:\n");
+            sb.append(String.format("Temperature: %.1f %s\n", temp, unit));
+            if (showFeelsLike) {
+                sb.append(String.format("Feels like: %.1f %s\n", feelsLike, unit));
+            }
+            sb.append(String.format("Description: %s\n", description));
+            if (showHumidity) {
+                sb.append(String.format("Humidity: %d%%\n", humidity));
+            }
+            if (showWind) {
+                sb.append(String.format("Wind: %.1f m/s\n", windSpeed));
+            }
+*/
+    /**
+     * Get 5-day forecast using FREE API 2.5
+     * @param lat Latitude
+     * @param lon Longitude
+     * @param unit "C" or "F"
+     * @return Forecast data as String
+     */
+    public String getForecast(double lat, double lon, String unit) {
+        try {
+            String urlString = String.format(Locale.US, FORECAST_URL, lat, lon, apiKey);
+            JsonNode data = makeApiCall(urlString);
+            if (data == null) {
+                return "";
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("\nFORECAST (next 12 hours):\n");
+
+            if (data.has("list")) {
+                JsonNode list = data.get("list");
+                // Show first 4 entries (12 hours, 3-hour intervals)
+                for (int i = 0; i < Math.min(4, list.size()); i++) {
+                    JsonNode forecast = list.get(i);
+                    double temp = forecast.get("main").get("temp").asDouble();
+                    if (unit.equalsIgnoreCase("F")) {
+                        temp = celsiusToFahrenheit(temp);
+                    }
+
+                    String description = "";
+                    if (forecast.has("weather") && forecast.get("weather").isArray() && forecast.get("weather").size() > 0) {
+                        description = forecast.get("weather").get(0).get("main").asText();
+                    }
+
+                    sb.append(String.format("  +%dh: %.1f %s, %s\n", (i + 1) * 3, temp, unit, description));
+                }
+            }
+
+            return sb.toString();
+        } catch (Exception e) {
+            System.err.println("Error fetching forecast: " + e.getMessage());
+            return "";
+        }
     }
 
-    public String getWeatherByCity(String cityName, String unit, String username) {
+    /**
+     * MAIN METHOD: Get all weather data for a city
+     *
+     * @param cityName City name (e.g. "Berlin" or "Berlin,DE")
+     * @param unit Temperature unit: "C" for Celsius or "F" for Fahrenheit
+     * @param username Username for history (optional)
+     * @return String with all weather data (current + forecast)
+     */
+    //public String getWeatherByCity(String cityName, String unit, String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
+   /* public String getWeatherByCity(String cityName, String unit, String username) {
         return getWeatherByCity(cityName, unit, username, true, true, true);
     }
-
-    public String getWeatherByCity(String cityName, String unit, String username,
-                                   boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+*/
+        public String getWeatherByCity(String cityName, String unit, String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
             // Get coordinates
             JsonNode geoData = geocodingService.getCoordinates(cityName);
@@ -83,7 +150,7 @@ public class WeatherService {
             String country = geoData.has("country") ? geoData.get("country").asText() : "";
 
             // Get current weather
-            String weather = getCurrentWeather(lat, lon, unit, showFeelsLike, showHumidity, showWind);
+            String weather = getCurrentWeather(lat, lon, unit, showHumidity, showWind, showFeelsLike);
 
             // Save to history
             if (username != null && !username.isEmpty()) {
@@ -109,7 +176,8 @@ public class WeatherService {
             JsonNode data = apiClient.makeOpenMeteoCall(url);
             return forecastService.processForecast(data, unit, showFeelsLike, showHumidity, showWind);
         } catch (Exception e) {
-            return "ERROR: " + e.getMessage();
+            System.err.println("Error fetching weather data: " + e.getMessage());
+            return "ERROR: Can't fetch weather data. Error: " + e.getMessage();
         }
     }
 
@@ -201,6 +269,13 @@ public class WeatherService {
             String url = String.format(OPEN_METEO_HISTORY_URL, lat, lon, startDate, endDate);
             JsonNode data = apiClient.makeOpenMeteoCall(url);
 
+            // Append to CSV file
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvFile, true), StandardCharsets.UTF_8))) {
+                // Write header if new file
+                if (isNewFile) {
+                    writer.write("timestamp,username,city");
+                    writer.newLine();
+                }
             return historyService.exportHistoricalDataToCSV(
                 cityName, lat, lon, unit, username, data, WeatherCodeDecoder::decode
             );
@@ -227,6 +302,38 @@ public class WeatherService {
             return "ERROR: " + e.getMessage();
         }
     }
+
+/* ----------------Moritz---------------------
+        public String getRecentCities(String username) {
+            File csvFile = new File(HISTORY_CSV);
+            if (!csvFile.exists()) {
+                return "";
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_8))) {
+                List<String> cities = reader.lines()
+                        .skip(1) // Skip header line
+                        .map(line -> line.split(","))
+                        .filter(parts -> parts.length >= 3 && parts[1].equals(username)) // Filter by username
+                        .map(parts -> parts[2]) // Get city name
+                        .collect(Collectors.toList());
+
+                // Reverse to show newest first
+                java.util.Collections.reverse(cities);
+
+                // Return distinct cities, limited to MAX_HISTORY_ENTRIES
+                return cities.stream()
+                        .distinct()
+                        .limit(MAX_HISTORY_ENTRIES)
+                        .collect(Collectors.joining(","));
+
+            } catch (IOException e) {
+                System.err.println("Error while reading CSV database: " + e.getMessage());
+                return "ERROR: History unavailable.";
+            }
+        }
+
+    */
 
     // =====================================================
     // OFFLINE MODE

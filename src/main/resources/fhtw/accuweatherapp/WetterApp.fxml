@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fhtw.accuweatherapp.UIController">
+<BorderPane fx:id="main_pane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fhtw.accuweatherapp.UIController">
    <top>
       <HBox prefHeight="24.0" prefWidth="580.0" BorderPane.alignment="CENTER">
          <children>
@@ -117,9 +117,23 @@
                   </CheckBox>
                   <CheckBox fx:id="check_history" mnemonicParsing="false" onAction="#onCheckHistory" text="History">
                      <HBox.margin>
-                        <Insets top="8.5" />
+                        <Insets right="10.0" top="8.5" />
                      </HBox.margin>
                   </CheckBox>
+               </children>
+            </HBox>
+            <HBox prefHeight="24.0" prefWidth="580.0">
+               <children>
+                  <Button fx:id="btn_setasstandard" mnemonicParsing="false" onAction="#onsetasstandard" text="Set as standard">
+                     <HBox.margin>
+                        <Insets right="27.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button fx:id="btn_uimode" mnemonicParsing="false" onAction="#onuimode" prefHeight="26.0" prefWidth="52.0" style="-fx-background-color: black;" text="Black" textFill="WHITE">
+                     <HBox.margin>
+                        <Insets top="5.0" />
+                     </HBox.margin>
+                  </Button>
                </children>
             </HBox>
          </children>

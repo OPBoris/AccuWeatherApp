@@ -2,13 +2,14 @@ package server_client;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class ClientConnection implements Closeable {
     private final String host;
     private final int port;
     private Socket socket;
     private BufferedReader reader;
-    private PrintWriter writer;
+    private BufferedWriter writer;
     private boolean connected = false;
 
     public ClientConnection(String host, int port) {
@@ -24,28 +25,28 @@ public class ClientConnection implements Closeable {
         closeInternal();
 
         socket = new Socket(host, port);
-        reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        writer = new PrintWriter(socket.getOutputStream(), true);
+        reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
         connected = true;
     }
 
     public synchronized String sendCommand(String command) throws IOException {
         try {
             ensureConnected();
-            writer.println(command);
+            writer.write(command);
+            writer.newLine();
             writer.flush();
 
             String line;
-            String response = "";
+            StringBuilder response = new StringBuilder();
             while ((line = reader.readLine()) != null && !line.equals("###END###")) {
-                response += line + "\n";
+                response.append(line).append("\n");
             }
 
             if (response.isEmpty()) {
-                connected = false;
                 throw new IOException("Server closed connection");
             }
-            return response.trim();
+            return response.toString().trim();
         } catch (IOException e) {
             connected = false;
             closeInternal();
@@ -70,7 +71,7 @@ public class ClientConnection implements Closeable {
     }
 
     @Override
-    public synchronized void close() throws IOException {
+    public synchronized void close() {
         connected = false;
         closeInternal();
     }
