@@ -8,8 +8,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Locale;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class WeatherService {
@@ -27,6 +30,8 @@ public class WeatherService {
     private static final String CURRENT_WEATHER_URL = "https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=metric";
     // 5-day Forecast API (FREE)
     private static final String FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast?lat=%s&lon=%s&appid=%s&units=metric";
+    // One Call 3.0 API (Time Machine)
+    private static final String HISTORY_URL = "https://history.openweathermap.org/data/2.5/history/city?lat={lat}&lon={lon}&type=hour&start={start}&end={end}&appid={API key}";
 
     public WeatherService() {
         this.apiKey = Config.getApiKey();
@@ -292,5 +297,86 @@ public class WeatherService {
             System.err.println("Error while reading CSV database: " + e.getMessage());
             return "ERROR: History unavailable.";
         }
+    }
+
+    public String getHistoricalReport(String city, String startDateStr, String endDateStr) {
+        try {
+            JsonNode geoData = getCoordinatesForCity(city);
+            if (geoData == null) return "REPORT_ERROR: City not found.";
+
+            double lat = geoData.get("lat").asDouble();
+            double lon = geoData.get("lon").asDouble();
+            String cityName = geoData.get("name").asText();
+            String country = geoData.has("country") ? geoData.get("country").asText() : "N/A";
+
+            LocalDate start = LocalDate.parse(startDateStr);
+            LocalDate end = LocalDate.parse(endDateStr);
+
+            if (start.isAfter(end)) return "REPORT_ERROR: The start date is after the end date.";
+            if (end.isAfter(LocalDate.now())) return "REPORT_ERROR: A date in the future is not possible.";
+
+            List<Map<String, String>> historyData = new ArrayList<>();
+            LocalDate current = start;
+
+            while (!current.isAfter(end)) {
+                long unixTime = current.atTime(12, 0).toEpochSecond(ZoneOffset.UTC);
+                String historyUrl = String.format(Locale.US, HISTORY_URL, lat, lon, unixTime, apiKey);
+
+                JsonNode response = makeApiCall(historyUrl);
+                if (response != null && response.has("data")) {
+                    JsonNode dayData = response.get("data").get(0);
+                    Map<String, String> dayMap = new HashMap<>();
+                    dayMap.put("date", current.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+                    dayMap.put("temp", String.format(Locale.US, "%.1f", dayData.get("temp").asDouble()));
+                    dayMap.put("cond", dayData.get("weather").get(0).get("description").asText());
+                    dayMap.put("wind", String.format(Locale.US, "%.1f", dayData.get("wind_speed").asDouble() * 3.6)); // m/s u km/h
+                    dayMap.put("humidity", dayData.get("humidity").asText());
+                    historyData.add(dayMap);
+                }
+                current = current.plusDays(1);
+            }
+
+            if (historyData.isEmpty()) return "REPORT_ERROR: No data was received from the API.";
+            return buildLatexReportFromRealData(cityName, country, lat, lon, historyData, start, end);
+
+        } catch (Exception e) {
+            return "REPORT_ERROR: API Error: " + e.getMessage();
+        }
+    }
+
+    private String buildLatexReportFromRealData(String city, String country, double lat, double lon, List<Map<String, String>> data, LocalDate start, LocalDate end) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\\documentclass[10pt,a4paper]{article}\n")
+                .append("\\usepackage[utf8]{inputenc}\n")
+                .append("\\usepackage[english]{babel}\n")
+                .append("\\usepackage{booktabs}\n")
+                .append("\\usepackage[margin=2cm]{geometry}\n")
+                .append("\\begin{document}\n")
+                .append("\\title{Official weather report: ").append(city).append("}\n")
+                .append("\\author{OpenWeather One Call 3.0 System}\n")
+                .append("\\date{Reporting period: ").append(start).append(" until ").append(end).append("}\n")
+                .append("\\maketitle\n")
+                .append("\\section*{Location and metadata}\n")
+                .append("\\textbf{Place:} ").append(city).append(", ").append(country).append("\\\\\n")
+                .append("\\textbf{Coordinates:} ").append(lat).append(" N, ").append(lon).append(" E\\\\\n")
+                .append("\\textbf{Data status:} Verified historical API data.\n")
+                .append("\\section*{Weather history}\n")
+                .append("\\begin{tabular}{lrrrl}\n\\toprule\n")
+                .append("Datum & Temp ($^\\circ$C) & Humidity (\\%) & Wind (km/h) & Condition \\\\\n\\midrule\n");
+
+        for (Map<String, String> d : data) {
+            sb.append(d.get("date")).append(" & ")
+                    .append(d.get("temp")).append(" & ")
+                    .append(d.get("humidity")).append(" & ")
+                    .append(d.get("wind")).append(" & ")
+                    .append(d.get("cond")).append(" \\\\\n");
+        }
+
+        sb.append("\\bottomrule\n\\end{tabular}\n")
+                .append("\\section*{Source reference}\n")
+                .append("Data source: OpenWeatherMap One Call 3.0 Historical API.\\\\\n")
+                .append("Creation time: ").append(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))).append(" Uhr\n")
+                .append("\\end{document}");
+        return sb.toString();
     }
 }

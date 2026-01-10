@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import server_client.ClientConnection;
+import server_client.ReportHandler;
 
 public class UIController {
     @FXML
@@ -54,7 +55,11 @@ public class UIController {
 
     @FXML
     protected void onReport() {
-        runCommand("GET_HISTORY");
+        String city = txt_field_city.getText();
+        String fullCommand = ReportHandler.showDateRangeDialog(city);
+        if (fullCommand != null) {
+            runCommand(fullCommand);
+        }
     }
 
     @FXML
