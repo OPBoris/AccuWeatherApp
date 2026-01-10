@@ -1,9 +1,23 @@
 package server_client;
-
+// ----Devlop----
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+//----
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -15,27 +29,59 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+
+/**
+ * WeatherService - Facade class for all weather operations
+ * Delegates all tasks to specialized service classes
+ * Uses Open-Meteo API (FREE, no API key required)
+ */
 public class WeatherService {
     private static final int MAX_HISTORY_ENTRIES = 10;
-    private final String apiKey;
-    private final ObjectMapper objectMapper;
-
-    // CSV Database file path
-    private static final String DB_FOLDER = "src/main/DB";
-    private static final String HISTORY_CSV = DB_FOLDER + "/search_history.csv";
-
-    // Geocoding API: City name to coordinates
-    private static final String GEOCODING_URL = "http://api.openweathermap.org/geo/1.0/direct?q=%s&limit=1&appid=%s";
-    // Current Weather API 2.5 (FREE)
-    private static final String CURRENT_WEATHER_URL = "https://api.openweathermap.org/data/2.5/weather?lat=%s&lon=%s&appid=%s&units=metric";
-    // 5-day Forecast API (FREE)
-    private static final String FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast?lat=%s&lon=%s&appid=%s&units=metric";
-    // One Call 3.0 API (Time Machine)
-    private static final String HISTORY_URL = "https://history.openweathermap.org/data/2.5/history/city?lat={lat}&lon={lon}&type=hour&start={start}&end={end}&appid={API key}";
+    /* ---Boris---
+    private static final String DB_PATH = "src/main/DB/";
 
     public WeatherService() {
-        this.apiKey = Config.getApiKey();
-        this.objectMapper = new ObjectMapper();
+        try {
+            Files.createDirectories(Paths.get(DB_PATH));
+        } catch (IOException e) {
+            System.out.println("Error: The system cannot create the DB folder at the specified path.: " + DB_PATH + " -> " + e.getMessage());
+        }
+    }*/
+
+    // API Client
+    private final ApiClient apiClient;
+
+    // Specialized Services
+    private final GeocodingService geocodingService;
+    private final CurrentWeatherService currentWeatherService;
+    private final ForecastService forecastService;
+    private final HistoryService historyService;
+    private final OfflineWeatherService offlineService;
+
+
+    // Open-Meteo API URLs (FREE)
+    private static final String CURRENT_WEATHER_URL =
+        "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=%s&timezone=auto";
+    private static final String FORECAST_URL =
+        "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max&temperature_unit=%s&timezone=auto&forecast_days=5";
+    private static final String OPEN_METEO_HISTORY_URL =
+        "https://archive-api.open-meteo.com/v1/archive?latitude=%s&longitude=%s&start_date=%s&end_date=%s&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,windspeed_10m_max,weathercode&timezone=auto";
+
+    // =====================================================
+    // CONSTRUCTOR
+    // =====================================================
+
+    public WeatherService() {
+        this.apiClient = new ApiClient();
+        this.geocodingService = new GeocodingService(apiClient);
+        this.currentWeatherService = new CurrentWeatherService();
+        this.forecastService = new ForecastService();
+        this.historyService = new HistoryService();
+        this.offlineService = new OfflineWeatherService();
     }
 
     /**
@@ -44,13 +90,7 @@ public class WeatherService {
      * @return JsonNode with "lat" and "lon" or null
      */
     public JsonNode getCoordinatesForCity(String city) throws Exception {
-        String encodedCity = URLEncoder.encode(city.trim(), StandardCharsets.UTF_8);
-        String urlString = String.format(GEOCODING_URL, encodedCity, apiKey);
-        JsonNode results = makeApiCall(urlString);
-        if (results != null && results.isArray() && results.size() > 0) {
-            return results.get(0);
-        }
-        return null;
+        return geocodingService.getCoordinates(city);
     }
 
     /**
@@ -60,46 +100,29 @@ public class WeatherService {
      * @param unit "C" or "F"
      * @return Weather data as String
      */
-    public String getCurrentWeather(double lat, double lon, String unit) {
+    public String getCurrentWeather(double lat, double lon, String unit, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
-            String urlString = String.format(Locale.US, CURRENT_WEATHER_URL, lat, lon, apiKey);
-            JsonNode data = makeApiCall(urlString);
-            if (data == null) {
-                return "ERROR: Unable to fetch weather data.";
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            // Current weather
-            double temp = data.get("main").get("temp").asDouble();
-            double feelsLike = data.get("main").get("feels_like").asDouble();
-            int humidity = data.get("main").get("humidity").asInt();
-            double windSpeed = data.get("wind").get("speed").asDouble();
-
-            if (unit.equalsIgnoreCase("F")) {
-                temp = celsiusToFahrenheit(temp);
-                feelsLike = celsiusToFahrenheit(feelsLike);
-            }
-
-            String description = "";
-            if (data.has("weather") && data.get("weather").isArray() && data.get("weather").size() > 0) {
-                description = data.get("weather").get(0).get("description").asText();
-            }
-
-            sb.append(String.format("CURRENT WEATHER:\n"));
-            sb.append(String.format("Temperature: %.1f %s\n", temp, unit));
-            sb.append(String.format("Feels like: %.1f %s\n", feelsLike, unit));
-            sb.append(String.format("Description: %s\n", description));
-            sb.append(String.format("Humidity: %d%%\n", humidity));
-            sb.append(String.format("Wind: %.1f m/s\n", windSpeed));
-
-            return sb.toString();
+            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String url = String.format(CURRENT_WEATHER_URL, lat, lon, tempUnit);
+            JsonNode data = apiClient.makeOpenMeteoCall(url);
+            return currentWeatherService.processCurrentWeather(data, unit, showFeelsLike, showHumidity, showWind);
         } catch (Exception e) {
-            System.err.println("Error fetching current weather: " + e.getMessage());
             return "ERROR: " + e.getMessage();
         }
-    }
-
+    }/*  ----------in currentweather klasse-----------
+            sb.append("CURRENT WEATHER:\n");
+            sb.append(String.format("Temperature: %.1f %s\n", temp, unit));
+            if (showFeelsLike) {
+                sb.append(String.format("Feels like: %.1f %s\n", feelsLike, unit));
+            }
+            sb.append(String.format("Description: %s\n", description));
+            if (showHumidity) {
+                sb.append(String.format("Humidity: %d%%\n", humidity));
+            }
+            if (showWind) {
+                sb.append(String.format("Wind: %.1f m/s\n", windSpeed));
+            }
+*/
     /**
      * Get 5-day forecast using FREE API 2.5
      * @param lat Latitude
@@ -107,10 +130,10 @@ public class WeatherService {
      * @param unit "C" or "F"
      * @return Forecast data as String
      */
-    public String getForecast(double lat, double lon, String unit) {
+    /*public String getForecast(double lat, double lon, String unit) {
         try {
-            String urlString = String.format(Locale.US, FORECAST_URL, lat, lon, apiKey);
-            JsonNode data = makeApiCall(urlString);
+            String urlString = String.format(FORECAST_URL, lat, lon);
+            JsonNode data = apiClient.makeApiCall(urlString);
             if (data == null) {
                 return "";
             }
@@ -142,7 +165,7 @@ public class WeatherService {
             System.err.println("Error fetching forecast: " + e.getMessage());
             return "";
         }
-    }
+    }*/
 
     /**
      * MAIN METHOD: Get all weather data for a city
@@ -152,12 +175,10 @@ public class WeatherService {
      * @param username Username for history (optional)
      * @return String with all weather data (current + forecast)
      */
-    public String getWeatherByCity(String cityName, String unit, String username) {
+    public String getWeatherByCity(String cityName, String unit, String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
-            // Step 1: Get coordinates for the city
-            System.out.println("Looking for coordinates: " + cityName);
-            JsonNode geoData = getCoordinatesForCity(cityName);
-
+            // Get coordinates
+            JsonNode geoData = geocodingService.getCoordinates(cityName);
             if (geoData == null) {
                 return "ERROR: City not found. Please check name.";
             }
@@ -167,136 +188,281 @@ public class WeatherService {
             String cityNameReal = geoData.get("name").asText();
             String country = geoData.has("country") ? geoData.get("country").asText() : "";
 
-            System.out.println("City found: " + cityNameReal + ", " + country + " (Lat: " + lat + ", Lon: " + lon + ")");
+            // Get current weather
+            String weather = getCurrentWeather(lat, lon, unit, showHumidity, showWind, showFeelsLike);
 
-            // Step 2: Get current weather + forecast
-            String currentWeather = getCurrentWeather(lat, lon, unit);
-            String forecast = getForecast(lat, lon, unit);
-
-            // Step 3: Save city to history
+            // Save to history
             if (username != null && !username.isEmpty()) {
-                saveToHistory(cityNameReal, username);
+                historyService.saveToHistory(cityNameReal, username);
             }
 
-            // Done! Return weather data
-            return "=== WEATHER FOR " + cityNameReal.toUpperCase() + ", " + country + " ===\n\n" + currentWeather + forecast;
+            return "=== WEATHER FOR " + cityNameReal.toUpperCase() + ", " + country + " ===\n\n" + weather;
 
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        }
+    }
+
+    // =====================================================
+    // FORECAST
+    // =====================================================
+
+    public String getForecast(double lat, double lon, String unit,
+                              boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+        try {
+            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String url = String.format(FORECAST_URL, lat, lon, tempUnit);
+            JsonNode data = apiClient.makeOpenMeteoCall(url);
+            return forecastService.processForecast(data, unit, showFeelsLike, showHumidity, showWind);
         } catch (Exception e) {
             System.err.println("Error fetching weather data: " + e.getMessage());
             return "ERROR: Can't fetch weather data. Error: " + e.getMessage();
         }
     }
 
-    /**
-     * Execute HTTP GET request and parse JSON response
-     */
-    private JsonNode makeApiCall(String urlString) throws Exception {
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    public String getForecastByCity(String cityName, String unit) {
+        return getForecastByCity(cityName, unit, true, true, true);
+    }
+
+    public String getForecastByCity(String cityName, String unit,
+                                    boolean showFeelsLike, boolean showHumidity, boolean showWind) {
         try {
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
-            int responseCode = connection.getResponseCode();
-            if (responseCode == 200) {
-                BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
-                );
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-                reader.close();
-                return objectMapper.readTree(response.toString());
-            } else if (responseCode == 404) {
-                System.err.println("API Error 404: Resource not found");
-                return null;
-            } else if (responseCode == 401) {
-                System.err.println("API Error 401: Invalid API Key");
-                throw new Exception("Invalid API Key");
-            } else {
-                System.err.println("API Error: HTTP " + responseCode);
-                return null;
+            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            if (geoData == null) {
+                return "ERROR: City not found. Please check name.";
             }
-        } finally {
-            connection.disconnect();
+
+            double lat = geoData.get("lat").asDouble();
+            double lon = geoData.get("lon").asDouble();
+
+            return getForecast(lat, lon, unit, showFeelsLike, showHumidity, showWind);
+
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
         }
     }
 
-    private double celsiusToFahrenheit(double celsius) {
-        return (celsius * 9.0 / 5.0) + 32.0;
+    // =====================================================
+    // HISTORICAL WEATHER
+    // =====================================================
+
+    public String getHistoricalWeather(double lat, double lon, String unit) {
+        try {
+            // Calculate date range (last 5 days)
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate endDate = today.minusDays(1);
+            java.time.LocalDate startDate = endDate.minusDays(4);
+
+            // Make API call
+            String url = String.format(OPEN_METEO_HISTORY_URL, lat, lon, startDate, endDate);
+            JsonNode data = apiClient.makeOpenMeteoCall(url);
+
+            if (data == null || !data.has("daily")) {
+                return "ERROR: Unable to fetch historical data.";
+            }
+
+            return historyService.processHistoricalData(data.get("daily"), unit);
+
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        }
     }
 
-    // CSV-based History Database
+    public String getHistoricalWeatherByCity(String cityName, String unit) {
+        try {
+            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            if (geoData == null) {
+                return "ERROR: City not found. Please check name.";
+            }
 
-    /**
-     * Save search to CSV database
-     * CSV Format: timestamp,username,city
-     */
+            double lat = geoData.get("lat").asDouble();
+            double lon = geoData.get("lon").asDouble();
+
+            return getHistoricalWeather(lat, lon, unit);
+
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        }
+    }
+
+    // =====================================================
+    // SEARCH HISTORY
+    // =====================================================
+
     public void saveToHistory(String city, String username) {
+        historyService.saveToHistory(city, username);
+    }
+
+    public String getRecentCities(String username) {
+        return historyService.getRecentCities(username);
+    }
+
+    public String exportHistoricalDataToCSV(String cityName, double lat, double lon, String unit, String username) {
         try {
-            // Create DB folder if it doesn't exist
-            File dbFolder = new File(DB_FOLDER);
-            if (!dbFolder.exists()) {
-                dbFolder.mkdirs();
-            }
+            // Calculate date range (last 30 days)
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate endDate = today.minusDays(1);
+            java.time.LocalDate startDate = endDate.minusDays(29);
 
-            // Create CSV file with header if it doesn't exist
-            File csvFile = new File(HISTORY_CSV);
-            boolean isNewFile = !csvFile.exists();
+            // Make API call
+            String url = String.format(OPEN_METEO_HISTORY_URL, lat, lon, startDate, endDate);
+            JsonNode data = apiClient.makeOpenMeteoCall(url);
 
-            // Append to CSV file
-            try (PrintWriter writer = new PrintWriter(new FileWriter(csvFile, true))) {
-                // Write header if new file
-                if (isNewFile) {
-                    writer.println("timestamp,username,city");
-                }
+            return historyService.exportHistoricalDataToCSV(
+                cityName, lat, lon, unit, username, data, WeatherCodeDecoder::decode
+            );
 
-                // Write data: timestamp,username,city
-                String timestamp = java.time.LocalDateTime.now().format(
-                    java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                );
-                writer.println(String.format("%s,%s,%s", timestamp, username, city.trim()));
-            }
-
-        } catch (IOException e) {
-            System.err.println("Error while writing to CSV database: " + e.getMessage());
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
         }
     }
 
-    /**
-     * Get recent searches for a user from CSV database
-     * @param username Username to filter by
-     * @return Comma-separated list of recent cities
-     */
-    public String getRecentCities(String username) {
-        File csvFile = new File(HISTORY_CSV);
-        if (!csvFile.exists()) {
-            return "";
+    public String exportHistoricalDataToCSVByCity(String cityName, String unit, String username) {
+        try {
+            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            if (geoData == null) {
+                return "ERROR: City not found. Cannot export data.";
+            }
+
+            double lat = geoData.get("lat").asDouble();
+            double lon = geoData.get("lon").asDouble();
+            String cityNameReal = geoData.get("name").asText();
+
+            return exportHistoricalDataToCSV(cityNameReal, lat, lon, unit, username);
+
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        }
+    }
+
+/* ----------------Moritz---------------------
+        public String getRecentCities(String username) {
+            File csvFile = new File(HISTORY_CSV);
+            if (!csvFile.exists()) {
+                return "";
+            }*/
+    public synchronized boolean addFavorite(String city, String username) {
+        String favFile = DB_PATH + username + "_favorites.txt";
+        String cleanCity = formatCityName(city);
+
+        List<String> currentFavs = readListFromFile(favFile);
+        if (currentFavs.contains(cleanCity)) {
+            return true;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile))) {
-            List<String> cities = reader.lines()
-                .skip(1) // Skip header line
-                .map(line -> line.split(","))
-                .filter(parts -> parts.length >= 3 && parts[1].equals(username)) // Filter by username
-                .map(parts -> parts[2]) // Get city name
-                .collect(Collectors.toList());
-
-            // Reverse to show newest first
-            java.util.Collections.reverse(cities);
-
-            // Return distinct cities, limited to MAX_HISTORY_ENTRIES
-            return cities.stream()
-                .distinct()
-                .limit(MAX_HISTORY_ENTRIES)
-                .collect(Collectors.joining(","));
-
+        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, true))) {
+            writer.println(cleanCity);
+            return true;
         } catch (IOException e) {
-            System.err.println("Error while reading CSV database: " + e.getMessage());
-            return "ERROR: History unavailable.";
+            System.out.println("Error saving favorite: " + e.getMessage());
+            return false;
         }
+    }
+
+    public synchronized boolean removeFavorite(String city, String username) {
+        String favFile = DB_PATH + username + "_favorites.txt";
+        String cleanCity = formatCityName(city);
+
+        List<String> currentFavs = readListFromFile(favFile);
+        if (!currentFavs.contains(cleanCity)) {
+            return false;
+        }
+
+        currentFavs.remove(cleanCity);
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, false))) {
+            for (String fav : currentFavs) {
+                writer.println(fav);
+            }
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error removing favorite: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public String getFavorites(String username) {
+        String favFile = DB_PATH + username + "_favorites.txt";
+        List<String> favs = readListFromFile(favFile);
+        return String.join(",", favs);
+    }
+
+/*
+    public String getRecentCities(String username) {
+        String historyFile = DB_PATH + username + "_history.txt";
+        List<String> allLines = readListFromFile(historyFile);
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_8))) {
+                List<String> cities = reader.lines()
+                        .skip(1) // Skip header line
+                        .map(line -> line.split(","))
+                        .filter(parts -> parts.length >= 3 && parts[1].equals(username)) // Filter by username
+                        .map(parts -> parts[2]) // Get city name
+                        .collect(Collectors.toList());
+
+                // Reverse to show newest first
+                java.util.Collections.reverse(cities);
+
+                // Return distinct cities, limited to MAX_HISTORY_ENTRIES
+                return cities.stream()
+                        .distinct()
+                        .limit(MAX_HISTORY_ENTRIES)
+                        .collect(Collectors.joining(","));
+
+            } catch (IOException e) {
+                System.err.println("Error while reading CSV database: " + e.getMessage());
+                return "ERROR: History unavailable.";
+            }
+        }
+
+    */
+
+    // =====================================================
+    // OFFLINE MODE
+    // =====================================================
+
+    public String saveOfflineData(String cityName, String unit, String username) {
+        try {
+            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            if (geoData == null) {
+                return "ERROR: City not found. Cannot save offline data.";
+            }
+
+            double lat = geoData.get("lat").asDouble();
+            double lon = geoData.get("lon").asDouble();
+            String cityNameReal = geoData.get("name").asText();
+            String country = geoData.has("country") ? geoData.get("country").asText() : "";
+
+            // Get current weather using Open-Meteo
+            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String currentUrl = String.format(CURRENT_WEATHER_URL, lat, lon, tempUnit);
+            JsonNode currentData = apiClient.makeOpenMeteoCall(currentUrl);
+
+            if (currentData == null) {
+                return "ERROR: Unable to fetch weather data for offline cache.";
+            }
+
+            // Get forecast using Open-Meteo
+            String forecastUrl = String.format(FORECAST_URL, lat, lon, tempUnit);
+            JsonNode forecastData = apiClient.makeOpenMeteoCall(forecastUrl);
+
+            return offlineService.saveOfflineData(cityNameReal, country, currentData, forecastData, unit, username);
+
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        }
+    }
+
+    public String loadOfflineData(String username) {
+        return offlineService.loadOfflineData(username);
+    }
+
+    public boolean isOnline() {
+        return offlineService.isOnline();
+    }
+
+    public String getOfflineForecast(String username) {
+        return offlineService.getOfflineForecast(username);
     }
 
     public String getHistoricalReport(String city, String startDateStr, String endDateStr) {
