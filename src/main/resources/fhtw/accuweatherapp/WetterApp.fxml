@@ -49,34 +49,34 @@
    <center>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <TextArea fx:id="txt_field_cur_weather" editable="false" prefHeight="123.0" prefWidth="580.0" text="Aktulles Wetter">
+            <TextArea fx:id="txt_field_cur_weather" editable="false" prefHeight="123.0" prefWidth="580.0" text="Current Weather">
                <VBox.margin>
                   <Insets bottom="10.0" />
                </VBox.margin>
             </TextArea>
             <HBox prefHeight="254.0" prefWidth="580.0">
                <children>
-                  <TextArea fx:id="txt_field_day1" editable="false" prefHeight="200.0" prefWidth="200.0" text="Tag 1">
+                  <TextArea fx:id="txt_field_day1" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 1">
                      <HBox.margin>
                         <Insets right="10.0" />
                      </HBox.margin>
                   </TextArea>
-                  <TextArea fx:id="txt_field_day2" editable="false" prefHeight="200.0" prefWidth="200.0" text="Tag 2">
+                  <TextArea fx:id="txt_field_day2" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 2">
                      <HBox.margin>
                         <Insets right="10.0" />
                      </HBox.margin>
                   </TextArea>
-                  <TextArea fx:id="txt_field_day3" editable="false" prefHeight="200.0" prefWidth="200.0" text="Tag 3">
+                  <TextArea fx:id="txt_field_day3" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 3">
                      <HBox.margin>
                         <Insets right="10.0" />
                      </HBox.margin>
                   </TextArea>
-                  <TextArea fx:id="txt_field_day4" editable="false" prefHeight="200.0" prefWidth="200.0" text="Tag 4">
+                  <TextArea fx:id="txt_field_day4" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 4">
                      <HBox.margin>
                         <Insets right="10.0" />
                      </HBox.margin>
                   </TextArea>
-                  <TextArea fx:id="txt_field_day5" editable="false" prefHeight="200.0" prefWidth="200.0" text="Tag 5" />
+                  <TextArea fx:id="txt_field_day5" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 5" />
                </children>
             </HBox>
             <HBox prefHeight="24.0" prefWidth="580.0">
@@ -111,6 +111,11 @@
                      </HBox.margin>
                   </CheckBox>
                   <CheckBox fx:id="check_wind" mnemonicParsing="false" onAction="#onCheckWind" text="Wind">
+                     <HBox.margin>
+                        <Insets right="10.0" top="8.5" />
+                     </HBox.margin>
+                  </CheckBox>
+                  <CheckBox fx:id="check_history" mnemonicParsing="false" onAction="#onCheckHistory" text="History">
                      <HBox.margin>
                         <Insets top="8.5" />
                      </HBox.margin>
