@@ -194,26 +194,33 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "ADD_FAVORITE":
-                        if (!payload.isEmpty()) {
-                            boolean success = weatherService.addFavorite(payload, username);
-                            writer.println(success ? "Favorite added" : "ERROR: Could not add favorite");
+                        if (parts.length > 1) {
+                            String city = parts[1].trim();
+                            boolean success = weatherService.addFavorite(city, currentUser.getUsername());
+                            sendMessage(writer, success ? "OK: Favorite added" : "ERROR: Could not add favorite");
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("ERROR: Missing city name for favorite");
+                            sendMessage(writer, "ERROR: Missing city name");
+                            sendMessage(writer, "###END###");
                         }
                         break;
 
                     case "REMOVE_FAVORITE":
-                        if (!payload.isEmpty()) {
-                            boolean success = weatherService.removeFavorite(payload, username);
-                            writer.println(success ? "OK: Favorite removed" : "ERROR: Favorite not found");
+                        if (parts.length > 1) {
+                            String city = parts[1].trim();
+                            boolean removeSuccess = weatherService.removeFavorite(city, currentUser.getUsername());
+                            sendMessage(writer, removeSuccess ? "OK: Favorite removed" : "ERROR: Favorite not found");
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("ERROR: Missing city name");
+                            sendMessage(writer, "ERROR: Missing city name");
+                            sendMessage(writer, "###END###");
                         }
                         break;
 
                     case "GET_FAVORITES":
-                        String favorites = weatherService.getFavorites(username);
-                        writer.println("FAVORITES:" + favorites);
+                        String favorites = weatherService.getFavorites(currentUser.getUsername());
+                        sendMessage(writer, "FAVORITES:" + favorites);
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "GET_HISTORY":
@@ -329,14 +336,14 @@ public class ClientHandler implements Runnable {
                     case "CHECK_HUMIDITY":
                         showHumidity = !showHumidity;
                         saveSettingsForCurrentUser();
-                        sendMessage(writer,"OK: showWind=" + showWind);
+                        sendMessage(writer,"OK: showHumidity=" + showHumidity);
                         sendMessage(writer, "###END###");
                         break;
 
                     case "CHECK_FEELS_LIKE":
                         showFeelsLike = !showFeelsLike;
                         saveSettingsForCurrentUser();
-                        sendMessage(writer,"OK: showWind=" + showWind);
+                        sendMessage(writer,"OK: showFeelsLike=" + showFeelsLike);
                         sendMessage(writer, "###END###");
                         break;
 
@@ -368,7 +375,7 @@ public class ClientHandler implements Runnable {
                         sendMessage(writer, "###END###");
                         break;
 
-                    case "GET_REPORT":
+                    /*case "GET_REPORT":
                         if (parts.length > 1) {
                             String args = parts[1].trim();
                             String[] reportArgs = args.split("\\s+");
@@ -379,17 +386,17 @@ public class ClientHandler implements Runnable {
                                 String rEnd = reportArgs[2];
 
                                 String report = weatherService.getHistoricalReport(rCity, rStart, rEnd);
-                                writer.println(report.startsWith("ERROR")
+                                sendMessage(writer, report.startsWith("ERROR")
                                         ? report
                                         : "REPORT_LATEX:" + report);
                             } else {
-                                writer.println("ERROR: Format: GET_REPORT <City> <Start> <End>");
+                                sendMessage(writer, "ERROR: Format: GET_REPORT <City> <Start> <End>");
                             }
                         } else {
-                            writer.println("ERROR: Missing report arguments");
+                            sendMessage(writer, "ERROR: Missing report arguments");
                         }
-                        writer.println("###END###");
-                        break;
+                        sendMessage(writer, "###END###");
+                        break;*/
 
                     default:
                         sendMessage(writer, "ERROR: Unknown command '" + command + "'");
@@ -408,3 +415,4 @@ public class ClientHandler implements Runnable {
         }
     }
 }
+

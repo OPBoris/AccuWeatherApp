@@ -1,2 +1,2 @@
 showHumidity,showWind,showFeelsLike,unit,standardCity
-false,false,false,F,Berlin
+true,true,true,C,London

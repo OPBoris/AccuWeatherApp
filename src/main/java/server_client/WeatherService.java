@@ -61,6 +61,7 @@ public class WeatherService {
     private final ForecastService forecastService;
     private final HistoryService historyService;
     private final OfflineWeatherService offlineService;
+    private final FavoritesService favoritesService;
 
 
     // Open-Meteo API URLs (FREE)
@@ -82,6 +83,7 @@ public class WeatherService {
         this.forecastService = new ForecastService();
         this.historyService = new HistoryService();
         this.offlineService = new OfflineWeatherService();
+        this.favoritesService = new FavoritesService();
     }
 
     /**
@@ -341,50 +343,29 @@ public class WeatherService {
             if (!csvFile.exists()) {
                 return "";
             }*/
+
+    // =====================================================
+    // FAVORITES
+    // =====================================================
+
     public synchronized boolean addFavorite(String city, String username) {
-        String favFile = DB_PATH + username + "_favorites.txt";
-        String cleanCity = formatCityName(city);
-
-        List<String> currentFavs = readListFromFile(favFile);
-        if (currentFavs.contains(cleanCity)) {
-            return true;
-        }
-
-        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, true))) {
-            writer.println(cleanCity);
-            return true;
-        } catch (IOException e) {
-            System.out.println("Error saving favorite: " + e.getMessage());
-            return false;
-        }
+        return favoritesService.addFavorite(city, username);
     }
 
     public synchronized boolean removeFavorite(String city, String username) {
-        String favFile = DB_PATH + username + "_favorites.txt";
-        String cleanCity = formatCityName(city);
-
-        List<String> currentFavs = readListFromFile(favFile);
-        if (!currentFavs.contains(cleanCity)) {
-            return false;
-        }
-
-        currentFavs.remove(cleanCity);
-
-        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, false))) {
-            for (String fav : currentFavs) {
-                writer.println(fav);
-            }
-            return true;
-        } catch (IOException e) {
-            System.out.println("Error removing favorite: " + e.getMessage());
-            return false;
-        }
+        return favoritesService.removeFavorite(city, username);
     }
 
     public String getFavorites(String username) {
-        String favFile = DB_PATH + username + "_favorites.txt";
-        List<String> favs = readListFromFile(favFile);
-        return String.join(",", favs);
+        return favoritesService.getFavorites(username);
+    }
+
+    public List<String> getFavoritesList(String username) {
+        return favoritesService.getFavoritesList(username);
+    }
+
+    public boolean isFavorite(String city, String username) {
+        return favoritesService.isFavorite(city, username);
     }
 
 /*
@@ -465,7 +446,7 @@ public class WeatherService {
         return offlineService.getOfflineForecast(username);
     }
 
-    public String getHistoricalReport(String city, String startDateStr, String endDateStr) {
+   /* public String getHistoricalReport(String city, String startDateStr, String endDateStr) {
         try {
             JsonNode geoData = getCoordinatesForCity(city);
             if (geoData == null) return "REPORT_ERROR: City not found.";
@@ -486,9 +467,9 @@ public class WeatherService {
 
             while (!current.isAfter(end)) {
                 long unixTime = current.atTime(12, 0).toEpochSecond(ZoneOffset.UTC);
-                String historyUrl = String.format(Locale.US, HISTORY_URL, lat, lon, unixTime, apiKey);
+                String historyUrl = String.format(Locale.US, OPEN_METEO_HISTORY_URL, lat, lon, unixTime);
 
-                JsonNode response = makeApiCall(historyUrl);
+                JsonNode response = apiClient.makeApiCall(historyUrl);
                 if (response != null && response.has("data")) {
                     JsonNode dayData = response.get("data").get(0);
                     Map<String, String> dayMap = new HashMap<>();
@@ -544,5 +525,7 @@ public class WeatherService {
                 .append("Creation time: ").append(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))).append(" Uhr\n")
                 .append("\\end{document}");
         return sb.toString();
-    }
+    }*/
 }
+
+
