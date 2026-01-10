@@ -1,30 +1,82 @@
 package server_client;
 
+import user.GuestUser;
+import user.RegularUser;
+import user.User;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final WeatherService weatherService;
+    private final SettingsService settingsService;
     private User currentUser;
+    private final User Moritz = new RegularUser("Moritz");
+    private final User Jan = new RegularUser("Jan");
+    private final User Boris = new RegularUser("Boris");
+    private String currentUnit;
+    private String standardCity = "";
+    private boolean showHumidity = false;
+    private boolean showWind = false;
+    private boolean showFeelsLike = false;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
         this.weatherService = new WeatherService();
+        this.settingsService = new SettingsService();
         this.currentUser = new GuestUser();
+        this.currentUnit = "C";
         System.out.println("Processing client request: " + clientSocket.getInetAddress().getHostAddress());
         System.out.println("Client created: " + currentUser);
+    }
+
+    private void loadSettingsForCurrentUser() {
+        if (currentUser instanceof GuestUser) {
+            showHumidity = false;
+            showWind = false;
+            showFeelsLike = false;
+            currentUnit = "C";
+            standardCity = "";
+        } else {
+            String[] settings = settingsService.loadUserSettings(currentUser.getUsername());
+            showHumidity = Boolean.parseBoolean(settings[0]);
+            showWind = Boolean.parseBoolean(settings[1]);
+            showFeelsLike = Boolean.parseBoolean(settings[2]);
+            currentUnit = settings[3];
+            if (settings.length > 4) {
+                standardCity = settings[4];
+            } else {
+                standardCity = "";
+            }
+            System.out.println("Loaded settings for " + currentUser.getUsername() + ": H=" + showHumidity + ", W="
+                    + showWind + ", FL=" + showFeelsLike + ", Unit=" + currentUnit + ", StandardCity=" + standardCity);
+        }
+    }
+
+    private void saveSettingsForCurrentUser() {
+        if (!(currentUser instanceof GuestUser)) {
+            settingsService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, standardCity);
+        }
+    }
+
+    private void sendMessage(BufferedWriter writer, String message) throws IOException {
+        writer.write(message);
+        writer.newLine();
+        writer.flush();
     }
 
     @Override
     public void run() {
 
         try (
-                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)
+                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8))
         ) {
             String clientMessage;
 
@@ -33,16 +85,46 @@ public class ClientHandler implements Runnable {
 
                 String[] parts = clientMessage.trim().split("\\s+", 2);
                 String command = parts[0].toUpperCase();
-                String payload = (parts.length > 1) ? parts[1].trim() : "";
 
-                String username = currentUser.getUsername();
-                System.out.println("Received command: " + command + " from " + username);
+                //Just for debugging purposes
+                System.out.println("Received command: " + clientMessage);
 
                 switch (command) {
-                    case "PING":
-                        writer.println("PONG");
-                        break;
+                    case "GET_WEATHER":
+                        if (parts.length > 1) {
+                            String args = parts[1].trim();
+//-------------ANFANG Jan-------------------
+                            // Parse filter flags
+                            boolean showFeelsLike = args.contains("FEELS_LIKE=true");
+                            boolean showHumidity = args.contains("HUMIDITY=true");
+                            boolean showWind = args.contains("WIND=true");
 
+                            // Remove filter flags from args to get city and unit
+                            String cleanArgs = args.replaceAll("FEELS_LIKE=(true|false)", "")
+                                                   .replaceAll("HUMIDITY=(true|false)", "")
+                                                   .replaceAll("WIND=(true|false)", "")
+                                                   .trim();
+
+                            String city = cleanArgs;
+
+                            if (cleanArgs.toUpperCase().endsWith(" F")) {
+                                currentUnit = "F";
+                                city = cleanArgs.substring(0, cleanArgs.length() - 2).trim();
+                            } else if (cleanArgs.toUpperCase().endsWith(" C")) {
+                                currentUnit = "C";
+                                city = cleanArgs.substring(0, cleanArgs.length() - 2).trim();
+                            }
+
+                            String response = weatherService.getWeatherByCity(city, currentUnit,
+                                currentUser.getUsername(), showFeelsLike, showHumidity, showWind);
+                            sendMessage(writer, response);
+                            sendMessage(writer, "###END###");
+                        } else {
+                            sendMessage(writer,"ERROR: Missing city name");
+                            sendMessage(writer,"###END###");
+                        }
+                        break;
+/*  ------Boris----
                     case "LOGIN":
                         if (!payload.isEmpty()) {
                             this.currentUser = new RegisteredUser(payload);
@@ -52,33 +134,62 @@ public class ClientHandler implements Runnable {
                             writer.println("ERROR: Missing username for login");
                         }
                         break;
+*/
+                    case "GET_FORECAST":
+                        if (parts.length > 1) {
+                            String args = parts[1].trim();
 
-                    case "SEARCH_CITIES":
-                        if (!payload.isEmpty()) {
-                            String suggestions = weatherService.searchCities(payload);
-                            writer.println("SUGGESTIONS:" + suggestions);
+                            // Parse filter flags
+                            boolean showFeelsLike = args.contains("FEELS_LIKE=true");
+                            boolean showHumidity = args.contains("HUMIDITY=true");
+                            boolean showWind = args.contains("WIND=true");
+
+                            // Remove filter flags from args to get city and unit
+                            String cleanArgs = args.replaceAll("FEELS_LIKE=(true|false)", "")
+                                                   .replaceAll("HUMIDITY=(true|false)", "")
+                                                   .replaceAll("WIND=(true|false)", "")
+                                                   .trim();
+
+                            String city = cleanArgs;
+
+                            if (cleanArgs.toUpperCase().endsWith(" F")) {
+                                currentUnit = "F";
+                                city = cleanArgs.substring(0, cleanArgs.length() - 2).trim();
+                            } else if (cleanArgs.toUpperCase().endsWith(" C")) {
+                                currentUnit = "C";
+                                city = cleanArgs.substring(0, cleanArgs.length() - 2).trim();
+                            }
+
+                            String forecastResponse = weatherService.getForecastByCity(city, currentUnit,
+                                showFeelsLike, showHumidity, showWind);
+                            sendMessage(writer, forecastResponse);
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("SUGGESTIONS:");
+                            sendMessage(writer, "ERROR: Missing city name");
+                            sendMessage(writer, "###END###");
                         }
                         break;
 
-                    case "GET_WEATHER":
-                        if (!payload.isEmpty()) {
-                            String city = payload;
-                            String unit = "C";
+                    case "GET_HISTORICAL":
+                        if (parts.length > 1) {
+                            String args = parts[1].trim();
+//-------------ENDE Jan------------
+                            String city = args;
 
-                            if (payload.toUpperCase().endsWith(" F")) {
-                                unit = "F";
-                                city = payload.substring(0, payload.length() - 2).trim();
-                            } else if (payload.toUpperCase().endsWith(" C")) {
-                                unit = "C";
-                                city = payload.substring(0, payload.length() - 2).trim();
+                            if (args.toUpperCase().endsWith(" F")) {
+                                currentUnit = "F";
+                                city = args.substring(0, args.length() - 2).trim();
+                            } else if (args.toUpperCase().endsWith(" C")) {
+                                currentUnit = "C";
+                                city = args.substring(0, args.length() - 2).trim();
                             }
 
-                            String response = weatherService.getWeatherForCity(city, unit, username);
-                            writer.println(response);
+                            String historicalResponse = weatherService.getHistoricalWeatherByCity(city, currentUnit);
+                            sendMessage(writer, historicalResponse);
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("ERROR: Missing city name");
+                            sendMessage(writer, "ERROR: Missing city name");
+                            sendMessage(writer, "###END###");
                         }
                         break;
 
@@ -106,16 +217,160 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "GET_HISTORY":
-                        String history = weatherService.getRecentCities(username);
-                        writer.println("HISTORY:" + history);
+                        String history = weatherService.getRecentCities(currentUser.getUsername());
+                        sendMessage(writer, "HISTORY:" + history);
+                        sendMessage(writer, "###END###");
                         break;
 
-                    case "QUIT":
-                        writer.println("BYE");
-                        return;
+                    case "EXPORT_HISTORY":
+                        if (parts.length > 1) {
+                            String args = parts[1].trim();
+                            String city = args;
+                            String exportUnit = currentUnit;
+
+                            if (args.toUpperCase().endsWith(" F")) {
+                                exportUnit = "F";
+                                city = args.substring(0, args.length() - 2).trim();
+                            } else if (args.toUpperCase().endsWith(" C")) {
+                                exportUnit = "C";
+                                city = args.substring(0, args.length() - 2).trim();
+                            }
+
+                            String exportResult = weatherService.exportHistoricalDataToCSVByCity(
+                                city, exportUnit, currentUser.getUsername()
+                            );
+                            sendMessage(writer, exportResult);
+                            sendMessage(writer, "###END###");
+                        } else {
+                            sendMessage(writer, "ERROR: Missing city name for export");
+                            sendMessage(writer, "###END###");
+                        }
+                        break;
+
+                    case "SAVE_OFFLINE":
+                        // Save weather data for offline use
+                        if (parts.length > 1) {
+                            String args = parts[1].trim();
+                            String city = args;
+                            String offlineUnit = currentUnit;
+
+                            // Parse unit from arguments
+                            if (args.toUpperCase().endsWith(" F")) {
+                                offlineUnit = "F";
+                                city = args.substring(0, args.length() - 2).trim();
+                            } else if (args.toUpperCase().endsWith(" C")) {
+                                offlineUnit = "C";
+                                city = args.substring(0, args.length() - 2).trim();
+                            }
+
+                            String saveResult = weatherService.saveOfflineData(
+                                city, offlineUnit, currentUser.getUsername()
+                            );
+                            sendMessage(writer, saveResult);
+                            sendMessage(writer, "###END###");
+                        } else {
+                            sendMessage(writer, "ERROR: Missing city name for offline save");
+                            sendMessage(writer, "###END###");
+                        }
+                        break;
+
+                    case "LOAD_OFFLINE":
+                        // Load offline weather data from cache
+                        String offlineData = weatherService.loadOfflineData(currentUser.getUsername());
+                        sendMessage(writer, offlineData);
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "GET_OFFLINE_FORECAST":
+                        // Get offline forecast for UI display
+                        String offlineForecast = weatherService.getOfflineForecast(currentUser.getUsername());
+                        sendMessage(writer, offlineForecast);
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "CHECK_ONLINE":
+                        // Check if internet connection is available
+                        boolean isOnline = weatherService.isOnline();
+                        sendMessage(writer, isOnline ? "ONLINE" : "OFFLINE");
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "MORITZ":
+                        currentUser = Moritz;
+                        loadSettingsForCurrentUser();
+                        sendMessage(writer, "SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";"
+                                + showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "JAN":
+                        currentUser = Jan;
+                        loadSettingsForCurrentUser();
+                        sendMessage(writer,"SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";"
+                                + showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "BORIS":
+                        currentUser = Boris;
+                        loadSettingsForCurrentUser();
+                        sendMessage(writer,"SETTINGS;" + currentUser.getUsername() + ";" + showHumidity + ";" +
+                                showWind + ";" + showFeelsLike + ";" + this.standardCity+ ";" + this.currentUnit);
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "CHECK_WIND":
+                        showWind = !showWind;
+                        saveSettingsForCurrentUser();
+                        sendMessage(writer,"OK: showWind=" + showWind);
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "CHECK_HUMIDITY":
+                        showHumidity = !showHumidity;
+                        saveSettingsForCurrentUser();
+                        sendMessage(writer,"OK: showWind=" + showWind);
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "CHECK_FEELS_LIKE":
+                        showFeelsLike = !showFeelsLike;
+                        saveSettingsForCurrentUser();
+                        sendMessage(writer,"OK: showWind=" + showWind);
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "SET_UNIT":
+                        if (parts.length > 1) {
+                            String newUnit = parts[1].toUpperCase();
+                            if (newUnit.equals("C") || newUnit.equals("F")) {
+                                currentUnit = newUnit;
+                                saveSettingsForCurrentUser();
+                                sendMessage(writer,"Unit set to " + newUnit);
+                            } else {
+                                sendMessage(writer, "ERROR: Invalid unit");
+                            }
+                        }
+                        sendMessage(writer, "###END###");
+                        break;
+
+                    case "SET_STANDARD":
+                        if (currentUser instanceof GuestUser) {
+                            sendMessage(writer,"ERROR: Guest users cannot save settings.");
+                        }
+                        else if (parts.length > 1) {
+                            this.standardCity = parts[1].trim();
+                            settingsService.saveUserSettings(currentUser.getUsername(), showHumidity, showWind, showFeelsLike, currentUnit, this.standardCity);
+                            sendMessage(writer,"Standard city set to " + standardCity);
+                        } else {
+                            sendMessage(writer,"ERROR: Missing city name");
+                        }
+                        sendMessage(writer, "###END###");
+                        break;
 
                     default:
-                        writer.println("ERROR: Unknown command '" + command + "'");
+                        sendMessage(writer, "ERROR: Unknown command '" + command + "'");
+                        sendMessage(writer, "###END###");
                         break;
                 }
             }
@@ -123,7 +378,6 @@ public class ClientHandler implements Runnable {
             System.err.println("Error in communication with the client: " + e.getMessage());
         } finally {
             try {
-                System.out.println("Connection closed for user: " + currentUser.getUsername());
                 clientSocket.close();
             } catch (IOException e) {
                 System.err.println("Error closing client socket: " + e.getMessage());
