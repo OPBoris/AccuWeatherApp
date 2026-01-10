@@ -2,6 +2,11 @@ package server_client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+
 /**
  * WeatherService - Facade class for all weather operations
  * Delegates all tasks to specialized service classes
@@ -18,6 +23,7 @@ public class WeatherService {
     private final ForecastService forecastService;
     private final HistoryService historyService;
     private final OfflineWeatherService offlineService;
+
 
     // Open-Meteo API URLs (FREE)
     private static final String CURRENT_WEATHER_URL =
@@ -86,10 +92,10 @@ public class WeatherService {
      * @param unit "C" or "F"
      * @return Forecast data as String
      */
-    public String getForecast(double lat, double lon, String unit) {
+    /*public String getForecast(double lat, double lon, String unit) {
         try {
-            String urlString = String.format(Locale.US, FORECAST_URL, lat, lon, apiKey);
-            JsonNode data = makeApiCall(urlString);
+            String urlString = String.format(FORECAST_URL, lat, lon);
+            JsonNode data = apiClient.makeApiCall(urlString);
             if (data == null) {
                 return "";
             }
@@ -121,7 +127,7 @@ public class WeatherService {
             System.err.println("Error fetching forecast: " + e.getMessage());
             return "";
         }
-    }
+    }*/
 
     /**
      * MAIN METHOD: Get all weather data for a city
@@ -131,12 +137,7 @@ public class WeatherService {
      * @param username Username for history (optional)
      * @return String with all weather data (current + forecast)
      */
-    //public String getWeatherByCity(String cityName, String unit, String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
-   /* public String getWeatherByCity(String cityName, String unit, String username) {
-        return getWeatherByCity(cityName, unit, username, true, true, true);
-    }
-*/
-        public String getWeatherByCity(String cityName, String unit, String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
+    public String getWeatherByCity(String cityName, String unit, String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
             // Get coordinates
             JsonNode geoData = geocodingService.getCoordinates(cityName);
@@ -269,13 +270,6 @@ public class WeatherService {
             String url = String.format(OPEN_METEO_HISTORY_URL, lat, lon, startDate, endDate);
             JsonNode data = apiClient.makeOpenMeteoCall(url);
 
-            // Append to CSV file
-            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvFile, true), StandardCharsets.UTF_8))) {
-                // Write header if new file
-                if (isNewFile) {
-                    writer.write("timestamp,username,city");
-                    writer.newLine();
-                }
             return historyService.exportHistoricalDataToCSV(
                 cityName, lat, lon, unit, username, data, WeatherCodeDecoder::decode
             );

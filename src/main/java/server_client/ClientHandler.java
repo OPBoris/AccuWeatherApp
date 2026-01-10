@@ -5,9 +5,10 @@ import user.RegularUser;
 import user.User;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
@@ -116,11 +117,11 @@ public class ClientHandler implements Runnable {
 
                             String response = weatherService.getWeatherByCity(city, currentUnit,
                                 currentUser.getUsername(), showFeelsLike, showHumidity, showWind);
-                            writer.println(response);
-                            writer.println("###END###");
+                            sendMessage(writer, response);
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("ERROR: Missing city name");
-                            writer.println("###END###");
+                            sendMessage(writer,"ERROR: Missing city name");
+                            sendMessage(writer,"###END###");
                         }
                         break;
 
@@ -151,11 +152,11 @@ public class ClientHandler implements Runnable {
 
                             String forecastResponse = weatherService.getForecastByCity(city, currentUnit,
                                 showFeelsLike, showHumidity, showWind);
-                            writer.println(forecastResponse);
-                            writer.println("###END###");
+                            sendMessage(writer, forecastResponse);
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("ERROR: Missing city name");
-                            writer.println("###END###");
+                            sendMessage(writer, "ERROR: Missing city name");
+                            sendMessage(writer, "###END###");
                         }
                         break;
 
@@ -205,11 +206,11 @@ public class ClientHandler implements Runnable {
                             String exportResult = weatherService.exportHistoricalDataToCSVByCity(
                                 city, exportUnit, currentUser.getUsername()
                             );
-                            writer.println(exportResult);
-                            writer.println("###END###");
+                            sendMessage(writer, exportResult);
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("ERROR: Missing city name for export");
-                            writer.println("###END###");
+                            sendMessage(writer, "ERROR: Missing city name for export");
+                            sendMessage(writer, "###END###");
                         }
                         break;
 
@@ -232,33 +233,33 @@ public class ClientHandler implements Runnable {
                             String saveResult = weatherService.saveOfflineData(
                                 city, offlineUnit, currentUser.getUsername()
                             );
-                            writer.println(saveResult);
-                            writer.println("###END###");
+                            sendMessage(writer, saveResult);
+                            sendMessage(writer, "###END###");
                         } else {
-                            writer.println("ERROR: Missing city name for offline save");
-                            writer.println("###END###");
+                            sendMessage(writer, "ERROR: Missing city name for offline save");
+                            sendMessage(writer, "###END###");
                         }
                         break;
 
                     case "LOAD_OFFLINE":
                         // Load offline weather data from cache
                         String offlineData = weatherService.loadOfflineData(currentUser.getUsername());
-                        writer.println(offlineData);
-                        writer.println("###END###");
+                        sendMessage(writer, offlineData);
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "GET_OFFLINE_FORECAST":
                         // Get offline forecast for UI display
                         String offlineForecast = weatherService.getOfflineForecast(currentUser.getUsername());
-                        writer.println(offlineForecast);
-                        writer.println("###END###");
+                        sendMessage(writer, offlineForecast);
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "CHECK_ONLINE":
                         // Check if internet connection is available
                         boolean isOnline = weatherService.isOnline();
-                        writer.println(isOnline ? "ONLINE" : "OFFLINE");
-                        writer.println("###END###");
+                        sendMessage(writer, isOnline ? "ONLINE" : "OFFLINE");
+                        sendMessage(writer, "###END###");
                         break;
 
                     case "MORITZ":
