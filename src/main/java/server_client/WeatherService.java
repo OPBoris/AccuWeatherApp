@@ -1,6 +1,24 @@
 package server_client;
-
+// ----Devlop----
 import com.fasterxml.jackson.databind.JsonNode;
+//----
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -13,6 +31,17 @@ import java.nio.charset.StandardCharsets;
  * Uses Open-Meteo API (FREE, no API key required)
  */
 public class WeatherService {
+    private static final int MAX_HISTORY_ENTRIES = 10;
+    /* ---Boris---
+    private static final String DB_PATH = "src/main/DB/";
+
+    public WeatherService() {
+        try {
+            Files.createDirectories(Paths.get(DB_PATH));
+        } catch (IOException e) {
+            System.out.println("Error: The system cannot create the DB folder at the specified path.: " + DB_PATH + " -> " + e.getMessage());
+        }
+    }*/
 
     // API Client
     private final ApiClient apiClient;
@@ -302,7 +331,57 @@ public class WeatherService {
             File csvFile = new File(HISTORY_CSV);
             if (!csvFile.exists()) {
                 return "";
+            }*/
+    public synchronized boolean addFavorite(String city, String username) {
+        String favFile = DB_PATH + username + "_favorites.txt";
+        String cleanCity = formatCityName(city);
+
+        List<String> currentFavs = readListFromFile(favFile);
+        if (currentFavs.contains(cleanCity)) {
+            return true;
+        }
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, true))) {
+            writer.println(cleanCity);
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error saving favorite: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public synchronized boolean removeFavorite(String city, String username) {
+        String favFile = DB_PATH + username + "_favorites.txt";
+        String cleanCity = formatCityName(city);
+
+        List<String> currentFavs = readListFromFile(favFile);
+        if (!currentFavs.contains(cleanCity)) {
+            return false;
+        }
+
+        currentFavs.remove(cleanCity);
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, false))) {
+            for (String fav : currentFavs) {
+                writer.println(fav);
             }
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error removing favorite: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public String getFavorites(String username) {
+        String favFile = DB_PATH + username + "_favorites.txt";
+        List<String> favs = readListFromFile(favFile);
+        return String.join(",", favs);
+    }
+
+/*
+    public String getRecentCities(String username) {
+        String historyFile = DB_PATH + username + "_history.txt";
+        List<String> allLines = readListFromFile(historyFile);
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_8))) {
                 List<String> cities = reader.lines()

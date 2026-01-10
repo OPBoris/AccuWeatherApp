@@ -124,7 +124,17 @@ public class ClientHandler implements Runnable {
                             sendMessage(writer,"###END###");
                         }
                         break;
-
+/*  ------Boris----
+                    case "LOGIN":
+                        if (!payload.isEmpty()) {
+                            this.currentUser = new RegisteredUser(payload);
+                            System.out.println("User logged in as: " + currentUser.getUsername());
+                            writer.println("Welcome " + currentUser.getUsername());
+                        } else {
+                            writer.println("ERROR: Missing username for login");
+                        }
+                        break;
+*/
                     case "GET_FORECAST":
                         if (parts.length > 1) {
                             String args = parts[1].trim();
@@ -181,6 +191,29 @@ public class ClientHandler implements Runnable {
                             sendMessage(writer, "ERROR: Missing city name");
                             sendMessage(writer, "###END###");
                         }
+                        break;
+
+                    case "ADD_FAVORITE":
+                        if (!payload.isEmpty()) {
+                            boolean success = weatherService.addFavorite(payload, username);
+                            writer.println(success ? "Favorite added" : "ERROR: Could not add favorite");
+                        } else {
+                            writer.println("ERROR: Missing city name for favorite");
+                        }
+                        break;
+
+                    case "REMOVE_FAVORITE":
+                        if (!payload.isEmpty()) {
+                            boolean success = weatherService.removeFavorite(payload, username);
+                            writer.println(success ? "OK: Favorite removed" : "ERROR: Favorite not found");
+                        } else {
+                            writer.println("ERROR: Missing city name");
+                        }
+                        break;
+
+                    case "GET_FAVORITES":
+                        String favorites = weatherService.getFavorites(username);
+                        writer.println("FAVORITES:" + favorites);
                         break;
 
                     case "GET_HISTORY":
