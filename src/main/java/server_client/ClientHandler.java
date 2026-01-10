@@ -116,7 +116,7 @@ public class ClientHandler implements Runnable {
                             }
 
                             String response = weatherService.getWeatherByCity(city, currentUnit,
-                                currentUser.getUsername(), showFeelsLike, showHumidity, showWind);
+                                currentUser.getUsername(), showHumidity, showWind, showFeelsLike);
                             sendMessage(writer, response);
                             sendMessage(writer, "###END###");
                         } else {

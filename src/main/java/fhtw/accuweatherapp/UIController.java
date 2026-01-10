@@ -630,20 +630,22 @@ public class UIController {
     private void runCommandAndRefresh(String command) {
         Task<String> task = new Task<>() {
             @Override protected String call() throws Exception {
-                String resp = connection.sendCommand(command);
-
-                String city = txt_field_city.getText();
-                if (city != null && !city.trim().isEmpty()) {
-                    return connection.sendCommand("GET_WEATHER " + city.trim() + " " + unit);
-                }
-                return resp;
+                return connection.sendCommand(command);
             }
         };
 
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
-            if(resp != null) {
-                txt_field_cur_weather.setText(resp);
+            String city = txt_field_city.getText();
+
+            if (city != null && !city.trim().isEmpty()) {
+                String trimmedCity = city.trim();
+                loadCurrentWeather(trimmedCity);
+                loadForecastOrHistory(trimmedCity);
+            } else {
+                if (resp != null) {
+                    txt_field_cur_weather.setText(resp);
+                }
             }
         });
 
@@ -694,7 +696,8 @@ public class UIController {
 
                     if (!standardCity.isEmpty()) {
                         txt_field_city.setText(standardCity);
-                        runCommand("GET_WEATHER " + standardCity + " " + unit);
+                        loadCurrentWeather(standardCity);
+                        loadForecastOrHistory(standardCity);
                     } else {
                         refreshWeatherIfPossible();
                     }
@@ -712,6 +715,7 @@ public class UIController {
         String city = txt_field_city.getText();
         if (city != null && !city.trim().isEmpty()) {
             runCommand("GET_WEATHER " + city.trim() + " " + unit);
+            loadForecastOrHistory(city.trim());
         }
     }
 }
