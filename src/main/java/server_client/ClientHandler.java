@@ -193,6 +193,18 @@ public class ClientHandler implements Runnable {
                         }
                         break;
 
+                    case "IS_FAVORITE":
+                        if (parts.length > 1) {
+                            String city = parts[1].trim();
+                            boolean isFav = weatherService.isFavorite(city, currentUser.getUsername());
+                            sendMessage(writer, "IS_FAVORITE:" + isFav);
+                            sendMessage(writer, "###END###");
+                        } else {
+                            sendMessage(writer, "ERROR: Missing city name");
+                            sendMessage(writer, "###END###");
+                        }
+                        break;
+
                     case "ADD_FAVORITE":
                         if (parts.length > 1) {
                             String city = parts[1].trim();

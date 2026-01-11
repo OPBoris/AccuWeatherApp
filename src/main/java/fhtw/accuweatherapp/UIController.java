@@ -2,16 +2,12 @@ package fhtw.accuweatherapp;
 
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import server_client.ClientConnection;
-import server_client.ReportHandler;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -25,24 +21,14 @@ public class UIController {
     @FXML private CheckBox check_wind;
     @FXML private BorderPane main_pane;
     @FXML private Button btn_uimode;
-
-    @FXML
-    private TextArea txt_field_day1;
-
-    @FXML
-    private TextArea txt_field_day2;
-
-    @FXML
-    private TextArea txt_field_day3;
-
-    @FXML
-    private TextArea txt_field_day4;
-
-    @FXML
-    private TextArea txt_field_day5;
-
-    @FXML
-    private javafx.scene.control.CheckBox check_history;
+    @FXML private TextArea txt_field_day1;
+    @FXML private TextArea txt_field_day2;
+    @FXML private TextArea txt_field_day3;
+    @FXML private TextArea txt_field_day4;
+    @FXML private TextArea txt_field_day5;
+    @FXML private javafx.scene.control.CheckBox check_history;
+    @FXML private ListView<String> list_favorites;
+    @FXML private Button btn_safe_favourite;
 
     private String unit = "C";
     private boolean humidityChecked = false;
@@ -50,6 +36,7 @@ public class UIController {
     private boolean feelsLikeChecked = false;
     private boolean isDarkMode = false;
     private boolean historyChecked = false;
+    private boolean isCurrentCityFavorite = false;
 
     private final ClientConnection connection = new ClientConnection("localhost", 8080);
 
@@ -63,11 +50,56 @@ public class UIController {
             }
         });
         updateCityComboBox();
+
+        list_favorites.setOnMouseClicked(event -> {
+            if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
+                String selectedCity = list_favorites.getSelectionModel().getSelectedItem();
+                if (selectedCity != null) {
+                    txt_field_city.setText(selectedCity);
+                    onSearch();
+                }
+            }
+        });
     }
 
     @FXML
     protected void onSafeFavourite() {
-        txt_field_cur_weather.setText("Pressed on Favourite.");
+        String city = txt_field_city.getText();
+        if (city == null || city.trim().isEmpty() || city.trim().length() < 3) {
+            txt_field_cur_weather.setText("Bitte erst eine gültige Stadt eingeben.");
+            return;
+        }
+
+        String trimmedCity = city.trim();
+        String command;
+
+        if (isCurrentCityFavorite) {
+            command = "REMOVE_FAVORITE " + trimmedCity;
+        } else {
+            command = "ADD_FAVORITE " + trimmedCity;
+        }
+
+        Task<String> task = new Task<>() {
+            @Override protected String call() throws Exception {
+                return connection.sendCommand(command);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            String resp = task.getValue();
+            if (resp.startsWith("OK")) {
+                isCurrentCityFavorite = !isCurrentCityFavorite;
+                updateStarStyle();
+                loadFavorites();
+
+                String action = isCurrentCityFavorite ? "hinzugefügt" : "entfernt";
+                txt_field_cur_weather.setText(trimmedCity + " wurde zu Favoriten " + action + ".");
+            } else {
+                txt_field_cur_weather.setText("Fehler: " + resp);
+            }
+        });
+
+        new Thread(task).start();
     }
 
     @FXML
@@ -96,7 +128,6 @@ public class UIController {
         } else {
             txt_field_cur_weather.setText("Please enter a city.");
         }
-        // Check if input is empty
         if (city == null || city.trim().isEmpty()) {
             txt_field_cur_weather.setText("Please enter a city.");
             return;
@@ -104,13 +135,11 @@ public class UIController {
 
         String trimmedCity = city.trim();
 
-        // Check minimum length (at least 3 characters)
         if (trimmedCity.length() < 3) {
             txt_field_cur_weather.setText("Please type in at least 3 characters.");
             return;
         }
 
-        // Check if input contains only valid characters (letters, spaces, hyphens, commas)
         if (!trimmedCity.matches("[a-zA-ZäöüÄÖÜß\\s\\-,]+")) {
             txt_field_cur_weather.setText("Please type only letters (no numbers or special characters).");
             return;
@@ -118,18 +147,16 @@ public class UIController {
 
         txt_field_cur_weather.setText("Loading weather data for: " + trimmedCity + "...");
 
-        // Clear forecast fields
         txt_field_day1.setText("Loading...");
         txt_field_day2.setText("Loading...");
         txt_field_day3.setText("Loading...");
         txt_field_day4.setText("Loading...");
         txt_field_day5.setText("Loading...");
 
-        // Load current weather
         loadCurrentWeather(trimmedCity);
 
-        // Load 5-day forecast OR historical data (depending on History checkbox)
         loadForecastOrHistory(trimmedCity);
+        checkFavoriteStatus(trimmedCity);
     }
 
     /**
@@ -258,14 +285,6 @@ public class UIController {
             // Show search history
             runCommand("GET_HISTORY");
         }
-
-        /*
-        String city = txt_field_city.getText();
-        String fullCommand = ReportHandler.showDateRangeDialog(city);
-        if (fullCommand != null) {
-            runCommand(fullCommand);
-        }
-         */
     }
 
     /**
@@ -442,66 +461,25 @@ public class UIController {
         unit = "C";
         runCommand("SET_UNIT C");
     }
-/* -----------JAN----------------
-    @FXML
-    protected void onUnitC() {
-        unit = "C";
-        txt_field_cur_weather.setText("Unit switched to °C.");
-        // Reload weather data if city is present
-        String city = txt_field_city.getText();
-        if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
-            onSearch();
-        }
-    }
-    */
+
     @FXML
     protected void onUnitF() {
         unit = "F";
         runCommand("SET_UNIT F");
     }
-/* --------jan----------
-    @FXML
-    protected void onUnitF() {
-        unit = "F";
-        txt_field_cur_weather.setText("Unit switched to °F.");
-        // Reload weather data if city is present
-        String city = txt_field_city.getText();
-        if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
-            onSearch();
-        }
-    }
-    */
+
     @FXML
     protected void onCheckFeelsLike() {
         feelsLikeChecked = !feelsLikeChecked;
         runCommandAndRefresh("CHECK_FEELS_LIKE");
     }
-/*
-    @FXML
-    protected void onCheckFeelsLike() {
-        feelsLikeChecked = !feelsLikeChecked;
-        String city = txt_field_city.getText();
-        if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
-            onSearch(); // Reload data with new filter
-        }
-    }
-  */
 
     @FXML
     protected void onCheckHumidity() {
         humidityChecked = !humidityChecked;
         runCommandAndRefresh("CHECK_HUMIDITY");
     }
-/*
-    @FXML
-    protected void onCheckHumidity() {
-        humidityChecked = !humidityChecked;
-        String city = txt_field_city.getText();
-        if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
-            onSearch(); // Reload data with new filter
-        }
-    }
-    */
+
     @FXML
     protected void onCheckWind() {
         windChecked = !windChecked;
@@ -532,6 +510,7 @@ public class UIController {
 
             txt_field_cur_weather.setText("Light Mode aktiviert.");
         }
+        updateStarStyle();
     }
 
     @FXML
@@ -579,16 +558,64 @@ public class UIController {
     }
 
 
-/*
-    @FXML
-    protected void onCheckWind() {
-        windChecked = !windChecked;
-        String city = txt_field_city.getText();
-        if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
-            onSearch(); // Reload data with new filter
+    private void updateStarStyle() {
+        if (isCurrentCityFavorite) {
+            // Aktiv: Goldene Farbe
+            btn_safe_favourite.setStyle("-fx-text-fill: gold; -fx-font-size: 16px; -fx-font-weight: bold;");
+            btn_safe_favourite.setText("★"); // Gefüllter Stern
+        } else {
+            // Inaktiv: Farbe je nach Mode (Schwarz oder Weiß)
+            String color = isDarkMode ? "white" : "black";
+            btn_safe_favourite.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 16px;");
+            btn_safe_favourite.setText("☆"); // Leerer Stern (optional, oder einfach ★ lassen)
         }
     }
-*/
+
+    private void checkFavoriteStatus(String city) {
+        if (city == null || city.trim().isEmpty()) return;
+
+        Task<String> task = new Task<>() {
+            @Override protected String call() throws Exception {
+                return connection.sendCommand("IS_FAVORITE " + city.trim());
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            String resp = task.getValue();
+            if (resp != null && resp.startsWith("IS_FAVORITE:")) {
+                String boolPart = resp.substring(12).trim();
+                isCurrentCityFavorite = Boolean.parseBoolean(boolPart);
+                updateStarStyle();
+            }
+        });
+
+        new Thread(task).start();
+    }
+
+    private void loadFavorites() {
+        if (list_favorites == null) return;
+
+        Task<List<String>> task = new Task<>() {
+            @Override protected List<String> call() throws Exception {
+                String response = connection.sendCommand("GET_FAVORITES");
+                if (response != null && response.startsWith("FAVORITES:")) {
+                    String data = response.substring(10).trim();
+                    if (!data.isEmpty()) {
+                        return java.util.Arrays.asList(data.split(","));
+                    }
+                }
+                return new ArrayList<>();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            list_favorites.getItems().clear();
+            list_favorites.getItems().addAll(task.getValue());
+        });
+
+        new Thread(task).start();
+    }
+
     @FXML
     protected void onCheckHistory() {
         historyChecked = !historyChecked;
@@ -698,9 +725,11 @@ public class UIController {
                         txt_field_city.setText(standardCity);
                         loadCurrentWeather(standardCity);
                         loadForecastOrHistory(standardCity);
+                        checkFavoriteStatus(standardCity);
                     } else {
                         refreshWeatherIfPossible();
                     }
+                    loadFavorites();
                 }
             } else {
                 txt_field_cur_weather.setText(response);

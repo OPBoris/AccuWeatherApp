@@ -1,38 +1,11 @@
 package server_client;
-// ----Devlop----
-import com.fasterxml.jackson.databind.JsonNode;
-//----
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
-import java.util.stream.Collectors;
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.io.*;
+import java.util.List;
+import java.io.*;
+import java.util.*;
+import java.util.*;
 
 /**
  * WeatherService - Facade class for all weather operations
@@ -41,16 +14,6 @@ import java.nio.charset.StandardCharsets;
  */
 public class WeatherService {
     private static final int MAX_HISTORY_ENTRIES = 10;
-    /* ---Boris---
-    private static final String DB_PATH = "src/main/DB/";
-
-    public WeatherService() {
-        try {
-            Files.createDirectories(Paths.get(DB_PATH));
-        } catch (IOException e) {
-            System.out.println("Error: The system cannot create the DB folder at the specified path.: " + DB_PATH + " -> " + e.getMessage());
-        }
-    }*/
 
     // API Client
     private final ApiClient apiClient;
@@ -111,20 +74,7 @@ public class WeatherService {
         } catch (Exception e) {
             return "ERROR: " + e.getMessage();
         }
-    }/*  ----------in currentweather klasse-----------
-            sb.append("CURRENT WEATHER:\n");
-            sb.append(String.format("Temperature: %.1f %s\n", temp, unit));
-            if (showFeelsLike) {
-                sb.append(String.format("Feels like: %.1f %s\n", feelsLike, unit));
-            }
-            sb.append(String.format("Description: %s\n", description));
-            if (showHumidity) {
-                sb.append(String.format("Humidity: %d%%\n", humidity));
-            }
-            if (showWind) {
-                sb.append(String.format("Wind: %.1f m/s\n", windSpeed));
-            }
-*/
+    }
     /**
      * Get 5-day forecast using FREE API 2.5
      * @param lat Latitude
@@ -132,42 +82,7 @@ public class WeatherService {
      * @param unit "C" or "F"
      * @return Forecast data as String
      */
-    /*public String getForecast(double lat, double lon, String unit) {
-        try {
-            String urlString = String.format(FORECAST_URL, lat, lon);
-            JsonNode data = apiClient.makeApiCall(urlString);
-            if (data == null) {
-                return "";
-            }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("\nFORECAST (next 12 hours):\n");
-
-            if (data.has("list")) {
-                JsonNode list = data.get("list");
-                // Show first 4 entries (12 hours, 3-hour intervals)
-                for (int i = 0; i < Math.min(4, list.size()); i++) {
-                    JsonNode forecast = list.get(i);
-                    double temp = forecast.get("main").get("temp").asDouble();
-                    if (unit.equalsIgnoreCase("F")) {
-                        temp = celsiusToFahrenheit(temp);
-                    }
-
-                    String description = "";
-                    if (forecast.has("weather") && forecast.get("weather").isArray() && forecast.get("weather").size() > 0) {
-                        description = forecast.get("weather").get(0).get("main").asText();
-                    }
-
-                    sb.append(String.format("  +%dh: %.1f %s, %s\n", (i + 1) * 3, temp, unit, description));
-                }
-            }
-
-            return sb.toString();
-        } catch (Exception e) {
-            System.err.println("Error fetching forecast: " + e.getMessage());
-            return "";
-        }
-    }*/
 
     /**
      * MAIN METHOD: Get all weather data for a city
@@ -337,12 +252,6 @@ public class WeatherService {
         }
     }
 
-/* ----------------Moritz---------------------
-        public String getRecentCities(String username) {
-            File csvFile = new File(HISTORY_CSV);
-            if (!csvFile.exists()) {
-                return "";
-            }*/
 
     // =====================================================
     // FAVORITES
@@ -368,35 +277,6 @@ public class WeatherService {
         return favoritesService.isFavorite(city, username);
     }
 
-/*
-    public String getRecentCities(String username) {
-        String historyFile = DB_PATH + username + "_history.txt";
-        List<String> allLines = readListFromFile(historyFile);
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile), StandardCharsets.UTF_8))) {
-                List<String> cities = reader.lines()
-                        .skip(1) // Skip header line
-                        .map(line -> line.split(","))
-                        .filter(parts -> parts.length >= 3 && parts[1].equals(username)) // Filter by username
-                        .map(parts -> parts[2]) // Get city name
-                        .collect(Collectors.toList());
-
-                // Reverse to show newest first
-                java.util.Collections.reverse(cities);
-
-                // Return distinct cities, limited to MAX_HISTORY_ENTRIES
-                return cities.stream()
-                        .distinct()
-                        .limit(MAX_HISTORY_ENTRIES)
-                        .collect(Collectors.joining(","));
-
-            } catch (IOException e) {
-                System.err.println("Error while reading CSV database: " + e.getMessage());
-                return "ERROR: History unavailable.";
-            }
-        }
-
-    */
 
     // =====================================================
     // OFFLINE MODE
@@ -445,87 +325,6 @@ public class WeatherService {
     public String getOfflineForecast(String username) {
         return offlineService.getOfflineForecast(username);
     }
-
-   /* public String getHistoricalReport(String city, String startDateStr, String endDateStr) {
-        try {
-            JsonNode geoData = getCoordinatesForCity(city);
-            if (geoData == null) return "REPORT_ERROR: City not found.";
-
-            double lat = geoData.get("lat").asDouble();
-            double lon = geoData.get("lon").asDouble();
-            String cityName = geoData.get("name").asText();
-            String country = geoData.has("country") ? geoData.get("country").asText() : "N/A";
-
-            LocalDate start = LocalDate.parse(startDateStr);
-            LocalDate end = LocalDate.parse(endDateStr);
-
-            if (start.isAfter(end)) return "REPORT_ERROR: The start date is after the end date.";
-            if (end.isAfter(LocalDate.now())) return "REPORT_ERROR: A date in the future is not possible.";
-
-            List<Map<String, String>> historyData = new ArrayList<>();
-            LocalDate current = start;
-
-            while (!current.isAfter(end)) {
-                long unixTime = current.atTime(12, 0).toEpochSecond(ZoneOffset.UTC);
-                String historyUrl = String.format(Locale.US, OPEN_METEO_HISTORY_URL, lat, lon, unixTime);
-
-                JsonNode response = apiClient.makeApiCall(historyUrl);
-                if (response != null && response.has("data")) {
-                    JsonNode dayData = response.get("data").get(0);
-                    Map<String, String> dayMap = new HashMap<>();
-                    dayMap.put("date", current.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-                    dayMap.put("temp", String.format(Locale.US, "%.1f", dayData.get("temp").asDouble()));
-                    dayMap.put("cond", dayData.get("weather").get(0).get("description").asText());
-                    dayMap.put("wind", String.format(Locale.US, "%.1f", dayData.get("wind_speed").asDouble() * 3.6)); // m/s u km/h
-                    dayMap.put("humidity", dayData.get("humidity").asText());
-                    historyData.add(dayMap);
-                }
-                current = current.plusDays(1);
-            }
-
-            if (historyData.isEmpty()) return "REPORT_ERROR: No data was received from the API.";
-            return buildLatexReportFromRealData(cityName, country, lat, lon, historyData, start, end);
-
-        } catch (Exception e) {
-            return "REPORT_ERROR: API Error: " + e.getMessage();
-        }
-    }
-
-    private String buildLatexReportFromRealData(String city, String country, double lat, double lon, List<Map<String, String>> data, LocalDate start, LocalDate end) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\\documentclass[10pt,a4paper]{article}\n")
-                .append("\\usepackage[utf8]{inputenc}\n")
-                .append("\\usepackage[english]{babel}\n")
-                .append("\\usepackage{booktabs}\n")
-                .append("\\usepackage[margin=2cm]{geometry}\n")
-                .append("\\begin{document}\n")
-                .append("\\title{Official weather report: ").append(city).append("}\n")
-                .append("\\author{OpenWeather One Call 3.0 System}\n")
-                .append("\\date{Reporting period: ").append(start).append(" until ").append(end).append("}\n")
-                .append("\\maketitle\n")
-                .append("\\section*{Location and metadata}\n")
-                .append("\\textbf{Place:} ").append(city).append(", ").append(country).append("\\\\\n")
-                .append("\\textbf{Coordinates:} ").append(lat).append(" N, ").append(lon).append(" E\\\\\n")
-                .append("\\textbf{Data status:} Verified historical API data.\n")
-                .append("\\section*{Weather history}\n")
-                .append("\\begin{tabular}{lrrrl}\n\\toprule\n")
-                .append("Datum & Temp ($^\\circ$C) & Humidity (\\%) & Wind (km/h) & Condition \\\\\n\\midrule\n");
-
-        for (Map<String, String> d : data) {
-            sb.append(d.get("date")).append(" & ")
-                    .append(d.get("temp")).append(" & ")
-                    .append(d.get("humidity")).append(" & ")
-                    .append(d.get("wind")).append(" & ")
-                    .append(d.get("cond")).append(" \\\\\n");
-        }
-
-        sb.append("\\bottomrule\n\\end{tabular}\n")
-                .append("\\section*{Source reference}\n")
-                .append("Data source: OpenWeatherMap One Call 3.0 Historical API.\\\\\n")
-                .append("Creation time: ").append(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))).append(" Uhr\n")
-                .append("\\end{document}");
-        return sb.toString();
-    }*/
 }
 
 
