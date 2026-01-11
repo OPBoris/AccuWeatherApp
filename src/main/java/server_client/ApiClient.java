@@ -9,10 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Utility class for making HTTP API calls
- * Handles GET requests and JSON parsing
- */
+
 public class ApiClient {
     private final ObjectMapper objectMapper;
 
@@ -20,13 +17,7 @@ public class ApiClient {
         this.objectMapper = new ObjectMapper();
     }
 
-    /**
-     * Make HTTP GET request to OpenWeatherMap API
-     * Handles authentication errors and common HTTP errors
-     *
-     * @param urlString Full URL with parameters
-     * @return JSON response as JsonNode or null on error
-     */
+
     public JsonNode makeApiCall(String urlString) throws Exception {
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -41,7 +32,7 @@ public class ApiClient {
             if (responseCode == 200) {
                 // Success - read response
                 BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
+                        new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
                 );
                 StringBuilder response = new StringBuilder();
                 String line;
@@ -69,13 +60,7 @@ public class ApiClient {
         }
     }
 
-    /**
-     * Make HTTP GET request to Open-Meteo API
-     * No authentication needed for Open-Meteo
-     *
-     * @param urlString Full URL with parameters
-     * @return JSON response as JsonNode or null on error
-     */
+
     public JsonNode makeOpenMeteoCall(String urlString) throws Exception {
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -90,7 +75,7 @@ public class ApiClient {
             if (responseCode == 200) {
                 // Success - read response
                 BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
+                        new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
                 );
                 StringBuilder response = new StringBuilder();
                 String line;

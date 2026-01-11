@@ -1,4 +1,4 @@
-package server_client;
+package server_client.services;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +21,7 @@ public class SettingsService {
             writer.write("showHumidity,showWind,showFeelsLike,unit,standardCity");
             writer.newLine();
 
-            String line = showHumidity + "," + showWind + "," + showFeelsLike + "," + unit+ "," + standardCity;
+            String line = showHumidity + "," + showWind + "," + showFeelsLike + "," + unit + "," + standardCity;
             writer.write(line);
             writer.newLine();
         } catch (IOException e) {
@@ -30,7 +30,7 @@ public class SettingsService {
     }
 
     public String[] loadUserSettings(String username) {
-        String[] settings = {"false", "false", "false" , "C", ""};
+        String[] settings = {"false", "false", "false", "C", ""};
 
         if (username == null || username.isEmpty()) return settings;
 

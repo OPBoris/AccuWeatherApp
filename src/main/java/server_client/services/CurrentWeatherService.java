@@ -1,32 +1,43 @@
-package server_client;
+package server_client.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import server_client.ApiClient;
+import server_client.WeatherCodeDecoder;
 
-/**
- * Service for managing current weather data
- * Handles current weather data processing from Open-Meteo API
- */
+
 public class CurrentWeatherService {
+    private static final String CURRENT_WEATHER_URL =
+            "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=%s&timezone=auto";
 
-    /**
-     * Process current weather data from Open-Meteo API response
-     *
-     * @param data JSON response from Open-Meteo API
-     * @param unit "C" or "F"
-     * @param showFeelsLike Show "Feels like" temperature
-     * @param showHumidity Show humidity
-     * @param showWind Show wind speed
-     * @return Formatted weather string
-     */
-    public String processCurrentWeather(JsonNode data, String unit,
-                                        boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+    private final ApiClient apiClient;
+
+    public CurrentWeatherService(ApiClient apiClient) {
+        this.apiClient = apiClient;
+    }
+
+
+    public String getCurrentWeather(double lat, double lon, String unit,
+                                    boolean showHumidity, boolean showWind, boolean showFeelsLike) {
+        try {
+            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String url = String.format(CURRENT_WEATHER_URL, lat, lon, tempUnit);
+            JsonNode data = apiClient.makeOpenMeteoCall(url);
+            return processCurrentWeather(data, unit, showFeelsLike, showHumidity, showWind);
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        }
+    }
+
+
+    private String processCurrentWeather(JsonNode data, String unit,
+                                         boolean showFeelsLike, boolean showHumidity, boolean showWind) {
         if (data == null || !data.has("current")) {
             return "ERROR: Unable to fetch weather data.";
         }
 
         StringBuilder sb = new StringBuilder();
 
-        // Extract current weather data from Open-Meteo format
+
         JsonNode current = data.get("current");
 
         double temp = current.get("temperature_2m").asDouble();
@@ -35,14 +46,14 @@ public class CurrentWeatherService {
         double windSpeed = current.get("wind_speed_10m").asDouble();
         int weatherCode = current.get("weather_code").asInt();
 
-        // Decode weather code
+
         String weatherDescription = WeatherCodeDecoder.decode(weatherCode);
 
-        // Build current weather output
+
         sb.append("CURRENT WEATHER:\n");
         sb.append(String.format("Temperature: %.1f°%s\n", temp, unit));
 
-        // Optional fields based on filters
+
         if (showFeelsLike) {
             sb.append(String.format("Feels like: %.1f°%s\n", feelsLike, unit));
         }

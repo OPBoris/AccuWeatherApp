@@ -62,12 +62,14 @@ public class ClientConnection implements Closeable {
             if (reader != null) {
                 reader.close();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     @Override

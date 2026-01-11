@@ -1,26 +1,36 @@
-package server_client;
+package server_client.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import server_client.ApiClient;
+import server_client.WeatherCodeDecoder;
 
-/**
- * Service for managing weather forecasts
- * Handles 5-day forecast data processing from Open-Meteo API
- */
+
 public class ForecastService {
+    private static final String FORECAST_URL =
+            "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max&temperature_unit=%s&timezone=auto&forecast_days=5";
 
-    /**
-     * Get 5-day forecast using Open-Meteo API
-     * Returns forecast for the next 5 days
-     *
-     * @param forecastData Forecast JSON data from Open-Meteo API
-     * @param unit "C" or "F" (temperature already converted by API)
-     * @param showFeelsLike Show "Feels like" temperature (not available in daily forecast)
-     * @param showHumidity Show humidity (not available in daily forecast)
-     * @param showWind Show wind speed
-     * @return Array of 5 daily forecasts separated by "|||"
-     */
-    public String processForecast(JsonNode forecastData, String unit,
-                                  boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+    private final ApiClient apiClient;
+
+    public ForecastService(ApiClient apiClient) {
+        this.apiClient = apiClient;
+    }
+
+
+    public String getForecast(double lat, double lon, String unit,
+                              boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+        try {
+            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String url = String.format(FORECAST_URL, lat, lon, tempUnit);
+            JsonNode data = apiClient.makeOpenMeteoCall(url);
+            return processForecast(data, unit, showFeelsLike, showHumidity, showWind);
+        } catch (Exception e) {
+            System.err.println("Error fetching weather data: " + e.getMessage());
+            return "ERROR: Can't fetch weather data. Error: " + e.getMessage();
+        }
+    }
+
+    private String processForecast(JsonNode forecastData, String unit,
+                                   boolean showFeelsLike, boolean showHumidity, boolean showWind) {
         try {
             if (forecastData == null || !forecastData.has("daily")) {
                 return "ERROR: Unable to fetch forecast data.";
@@ -46,10 +56,10 @@ public class ForecastService {
                 int rainProbability = precipProb.get(dayIndex).asInt();
                 double windSpeedVal = windSpeed.get(dayIndex).asDouble();
 
-                // Decode weather code
+
                 String weatherDescription = WeatherCodeDecoder.decode(weatherCode);
 
-                // Build forecast string for this day
+
                 StringBuilder dayForecast = new StringBuilder();
                 dayForecast.append(dateStr).append("\n");
                 dayForecast.append("Max: ").append(String.format("%.1f", tempMaxVal)).append("°").append(unit).append("\n");
@@ -75,4 +85,3 @@ public class ForecastService {
         }
     }
 }
-

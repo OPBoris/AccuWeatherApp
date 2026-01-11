@@ -1,17 +1,7 @@
 package server_client;
 
-/**
- * Utility class for decoding WMO Weather Codes
- * Based on WMO 4677 weather codes used by Open-Meteo
- */
 public class WeatherCodeDecoder {
 
-    /**
-     * Decode WMO Weather Code to human-readable description
-     *
-     * @param code WMO weather code (0-99)
-     * @return Human-readable weather description
-     */
     public static String decode(int code) {
         switch (code) {
             case 0:
@@ -65,4 +55,3 @@ public class WeatherCodeDecoder {
         }
     }
 }
-
