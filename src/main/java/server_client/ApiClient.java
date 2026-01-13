@@ -17,6 +17,7 @@ public class ApiClient {
         this.objectMapper = new ObjectMapper();
     }
 
+    //WIRD NICHT MEHR GENUTZT ???
 
     public JsonNode makeApiCall(String urlString) throws Exception {
         URL url = new URL(urlString);
