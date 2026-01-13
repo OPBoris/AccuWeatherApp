@@ -20,25 +20,19 @@ public class UIFavoritesHandler {
         this.connection = connection;
     }
 
-    public boolean isCurrentCityFavorite() {
-        return isCurrentCityFavorite;
-    }
-
-    public void setCurrentCityFavorite(boolean favorite) {
-        this.isCurrentCityFavorite = favorite;
-    }
-
-
     public void toggleFavorite(String city, Consumer<String> onSuccess, Consumer<String> onError) {
-        if (city == null || city.trim().isEmpty() || city.trim().length() < 3) {
+        if (city == null || city.trim().length() < 3) {
             onError.accept("Bitte erst eine gültige Stadt eingeben.");
             return;
         }
 
         String trimmedCity = city.trim();
-        String command = isCurrentCityFavorite
-                ? "REMOVE_FAVORITE " + trimmedCity
-                : "ADD_FAVORITE " + trimmedCity;
+        String command;
+        if (isCurrentCityFavorite) {
+            command = "REMOVE_FAVORITE " + trimmedCity;
+        } else {
+            command = "ADD_FAVORITE " + trimmedCity;
+        }
 
         Task<String> task = new Task<>() {
             @Override
