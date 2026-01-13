@@ -11,7 +11,7 @@ public class SettingsService {
 
     }
 
-    public void saveUserSettings(String username, boolean showHumidity, boolean showWind, boolean showFeelsLike,
+    public synchronized void saveUserSettings(String username, boolean showHumidity, boolean showWind, boolean showFeelsLike,
                                  String unit, String standardCity) {
         if (username == null || username.isEmpty() || username.equalsIgnoreCase("Guest")) return;
 

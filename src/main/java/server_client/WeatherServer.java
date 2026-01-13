@@ -13,13 +13,17 @@ public class WeatherServer {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
             while (!serverSocket.isClosed()) {
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("New client connected: " + clientSocket.getInetAddress().getHostAddress());
+                try {
+                    Socket clientSocket = serverSocket.accept();
+                    System.out.println("New client connected: " + clientSocket.getInetAddress().getHostAddress());
 
-                ClientHandler handler = new ClientHandler(clientSocket);
-                Thread clientThread = new Thread(handler);
+                    ClientHandler handler = new ClientHandler(clientSocket);
+                    Thread clientThread = new Thread(handler);
 
-                clientThread.start();
+                    clientThread.start();
+                } catch (IOException e) {
+                    System.err.println("Connection error with a client: " + e.getMessage());
+                }
             }
 
         } catch (IOException e) {
