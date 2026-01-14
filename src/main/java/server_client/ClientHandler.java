@@ -122,17 +122,7 @@ public class ClientHandler implements Runnable {
 
                     case "GET_HISTORICAL":
                         if (parts.length > 1) {
-                            String args = parts[1].trim();
-
-                            String city = args;
-
-                            if (args.toUpperCase().endsWith(" F")) {
-                                currentUnit = "F";
-                                city = args.substring(0, args.length() - 2).trim();
-                            } else if (args.toUpperCase().endsWith(" C")) {
-                                currentUnit = "C";
-                                city = args.substring(0, args.length() - 2).trim();
-                            }
+                            String city = parseAndSetFlags(parts[1].trim());
 
                             String historicalResponse = weatherService.getHistoricalWeatherByCity(city, currentUnit);
                             sendMessage(writer, historicalResponse);
@@ -193,20 +183,10 @@ public class ClientHandler implements Runnable {
 
                     case "EXPORT_HISTORY":
                         if (parts.length > 1) {
-                            String args = parts[1].trim();
-                            String city = args;
-                            String exportUnit = currentUnit;
-
-                            if (args.toUpperCase().endsWith(" F")) {
-                                exportUnit = "F";
-                                city = args.substring(0, args.length() - 2).trim();
-                            } else if (args.toUpperCase().endsWith(" C")) {
-                                exportUnit = "C";
-                                city = args.substring(0, args.length() - 2).trim();
-                            }
+                            String city = parseAndSetFlags(parts[1].trim());
 
                             String exportResult = weatherService.exportHistoricalDataToCSVByCity(
-                                    city, exportUnit, currentUser.getUsername()
+                                    city, currentUnit, currentUser.getUsername()
                             );
                             sendMessage(writer, exportResult);
                             sendMessage(writer, "###END###");
@@ -219,21 +199,10 @@ public class ClientHandler implements Runnable {
                     case "SAVE_OFFLINE":
 
                         if (parts.length > 1) {
-                            String args = parts[1].trim();
-                            String city = args;
-                            String offlineUnit = currentUnit;
-
-
-                            if (args.toUpperCase().endsWith(" F")) {
-                                offlineUnit = "F";
-                                city = args.substring(0, args.length() - 2).trim();
-                            } else if (args.toUpperCase().endsWith(" C")) {
-                                offlineUnit = "C";
-                                city = args.substring(0, args.length() - 2).trim();
-                            }
+                            String city = parseAndSetFlags(parts[1].trim());
 
                             String saveResult = weatherService.saveOfflineData(
-                                    city, offlineUnit, currentUser.getUsername()
+                                    city, currentUnit, currentUser.getUsername()
                             );
                             sendMessage(writer, saveResult);
                             sendMessage(writer, "###END###");
@@ -363,12 +332,13 @@ public class ClientHandler implements Runnable {
                 .replaceAll("WIND=(true|false)", "")
                 .trim();
 
+        String substring = cleanArgs.substring(0, cleanArgs.length() - 2);
         if (cleanArgs.toUpperCase().endsWith(" F")) {
             this.currentUnit = "F";
-            return cleanArgs.substring(0, cleanArgs.length() - 2).trim();
+            return substring.trim();
         } else if (cleanArgs.toUpperCase().endsWith(" C")) {
             this.currentUnit = "C";
-            return cleanArgs.substring(0, cleanArgs.length() - 2).trim();
+            return substring.trim();
         }
 
         return cleanArgs;

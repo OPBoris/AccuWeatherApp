@@ -45,7 +45,12 @@ public class UIFavoritesHandler {
             String resp = task.getValue();
             if (resp.startsWith("OK")) {
                 isCurrentCityFavorite = !isCurrentCityFavorite;
-                String action = isCurrentCityFavorite ? "hinzugefügt" : "entfernt";
+                String action;
+                if (isCurrentCityFavorite) {
+                    action = "hinzugefügt";
+                } else {
+                    action = "entfernt";
+                }
                 onSuccess.accept(trimmedCity + " wurde zu Favoriten " + action + ".");
             } else {
                 onError.accept("Fehler: " + resp);
@@ -54,7 +59,13 @@ public class UIFavoritesHandler {
 
         task.setOnFailed(e -> {
             Throwable ex = task.getException();
-            onError.accept("Fehler: " + (ex != null ? ex.getMessage() : "Unbekannter Fehler"));
+            String errorMessage;
+            if (ex != null) {
+                errorMessage = ex.getMessage();
+            } else {
+                errorMessage = "Unbekannter Fehler";
+            }
+            onError.accept("Fehler: " + errorMessage);
         });
 
         new Thread(task, "toggle-favorite").start();

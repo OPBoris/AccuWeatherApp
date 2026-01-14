@@ -35,21 +35,34 @@ public class UIUserHandler {
                     settings.showHumidity = Boolean.parseBoolean(parts[2]);
                     settings.showWind = Boolean.parseBoolean(parts[3]);
                     settings.showFeelsLike = Boolean.parseBoolean(parts[4]);
-                    settings.standardCity = parts.length > 5 ? parts[5] : "";
-                    settings.unit = parts.length > 6 ? parts[6] : "C";
+                    if (parts.length > 5) {
+                        settings.standardCity = parts[5];
+                    } else {
+                        settings.standardCity = "";
+                    }
+
+                    if (parts.length > 6) {
+                        settings.unit = parts[6];
+                    } else {
+                        settings.unit = "C";
+                    }
 
                     onSuccess.accept(settings);
                 } else {
                     onError.accept("Invalid settings format from server.");
                 }
             } else {
-                onError.accept(response != null ? response : "No response from server.");
+                String errorMessage;
+                if (response != null) {
+                    errorMessage = response;
+                } else {
+                    errorMessage = "No response from server.";
+                }
+                onError.accept(errorMessage);
             }
         });
 
-        task.setOnFailed(e -> {
-            onError.accept("Error user switching.");
-        });
+        task.setOnFailed(e -> onError.accept("Error user switching."));
 
         new Thread(task, "switch-user").start();
     }

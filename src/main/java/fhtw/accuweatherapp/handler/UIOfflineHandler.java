@@ -70,9 +70,12 @@ public class UIOfflineHandler {
 
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
-            String errorMsg = exception != null
-                    ? "Error loading offline data: " + exception.getMessage()
-                    : "Error loading offline data: Unknown error";
+            String errorMsg;
+            if (exception != null) {
+                errorMsg = "Error loading offline data: " + exception.getMessage();
+            } else {
+                errorMsg = "Error loading offline data: Unknown error";
+            }
             onError.accept(errorMsg);
         });
 

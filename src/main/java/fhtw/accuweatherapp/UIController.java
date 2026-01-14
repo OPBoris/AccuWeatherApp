@@ -213,27 +213,27 @@ public class UIController {
 
     @FXML
     protected void onUnitC() {
-        settingsHandler.setUnitCelsius(resp -> txt_field_cur_weather.setText("Einheit auf Celsius gesetzt."));
+        settingsHandler.setUnitCelsius(resp -> txt_field_cur_weather.setText("Unit set to C."));
     }
 
     @FXML
     protected void onUnitF() {
-        settingsHandler.setUnitFahrenheit(resp -> txt_field_cur_weather.setText("Einheit auf Fahrenheit gesetzt."));
+        settingsHandler.setUnitFahrenheit(resp -> txt_field_cur_weather.setText("Unit set to F."));
     }
 
     @FXML
     protected void onCheckFeelsLike() {
-        settingsHandler.toggleFeelsLike(() -> refreshWeatherIfPossible());
+        settingsHandler.toggleFeelsLike(this::refreshWeatherIfPossible);
     }
 
     @FXML
     protected void onCheckHumidity() {
-        settingsHandler.toggleHumidity(() -> refreshWeatherIfPossible());
+        settingsHandler.toggleHumidity(this::refreshWeatherIfPossible);
     }
 
     @FXML
     protected void onCheckWind() {
-        settingsHandler.toggleWind(() -> refreshWeatherIfPossible());
+        settingsHandler.toggleWind(this::refreshWeatherIfPossible);
     }
 
     @FXML
@@ -242,7 +242,7 @@ public class UIController {
             txt_field_cur_weather.setText(msg);
 
             String city = txt_field_city.getText();
-            if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
+            if (city != null && city.trim().length() >= 3) {
                 onSearch();
             }
         });
@@ -310,7 +310,7 @@ public class UIController {
 
     private void refreshWeatherIfPossible() {
         String city = txt_field_city.getText();
-        if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
+        if (city != null && city.trim().length() >= 3) {
             loadCurrentWeather(city.trim());
             loadForecastOrHistory(city.trim());
         }

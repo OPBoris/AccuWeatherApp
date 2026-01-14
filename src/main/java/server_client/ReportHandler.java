@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.Optional;
-
+// LÖSCHEN
 public class ReportHandler {
     public static String showDateRangeDialog(String city) {
         if (city == null || city.trim().isEmpty()) {
