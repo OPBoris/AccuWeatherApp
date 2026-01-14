@@ -127,11 +127,11 @@ public class UIFavoritesHandler {
         if (btnFavorite == null) return;
 
         if (isCurrentCityFavorite) {
-            btnFavorite.setStyle("-fx-text-fill: gold; -fx-font-size: 16px; -fx-font-weight: bold;");
+            btnFavorite.setStyle("-fx-text-fill: gold; -fx-font-weight: bold;");
             btnFavorite.setText("★");
         } else {
             String color = isDarkMode ? "white" : "black";
-            btnFavorite.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 16px;");
+            btnFavorite.setStyle("-fx-text-fill: " + color + ";");
             btnFavorite.setText("☆");
         }
     }

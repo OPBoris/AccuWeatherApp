@@ -13,7 +13,7 @@
                   <Insets />
                </HBox.margin>
             </TextField>
-            <Button fx:id="btn_safe_favourite" mnemonicParsing="false" onAction="#onSafeFavourite" prefHeight="25.0" prefWidth="40.0" text="★" />
+            <Button fx:id="btn_safe_favourite" mnemonicParsing="false" onAction="#onSafeFavourite" prefHeight="25.0" prefWidth="40.0" text="☆" />
             <MenuButton fx:id="menu_user" mnemonicParsing="false" prefHeight="25.0" prefWidth="90.0" text="User">
               <items>
                 <MenuItem fx:id="menu_item_moritz" mnemonicParsing="false" onAction="#onMoritz" text="Moritz" />
