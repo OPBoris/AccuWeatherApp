@@ -2,6 +2,7 @@ package server_client.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
+import server_client.ApiUrls;
 import server_client.WeatherCodeDecoder;
 
 import java.io.*;
@@ -11,10 +12,6 @@ import java.net.URL;
 
 public class OfflineWeatherService {
     private static final String DB_FOLDER = "src/main/DB";
-    private static final String CURRENT_WEATHER_URL =
-            "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=%s&timezone=auto";
-    private static final String FORECAST_URL =
-            "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max&temperature_unit=%s&timezone=auto&forecast_days=5";
 
     private final ApiClient apiClient;
 
@@ -33,18 +30,14 @@ public class OfflineWeatherService {
             } else {
                 tempUnit = "celsius";
             }
-            String currentUrl = String.format(CURRENT_WEATHER_URL, lat, lon, tempUnit);
+            String currentUrl = String.format(ApiUrls.CURRENT_WEATHER, lat, lon, tempUnit);
             JsonNode currentData = apiClient.makeOpenMeteoCall(currentUrl);
 
             if (currentData == null) {
                 return "ERROR: Unable to fetch weather data for offline cache.";
             }
 
-
-            String forecastUrl = String.format(FORECAST_URL, lat, lon, tempUnit);
-            JsonNode forecastData = apiClient.makeOpenMeteoCall(forecastUrl);
-
-            return saveOfflineDataInternal(cityNameReal, country, currentData, forecastData, unit, username);
+            return saveOfflineDataInternal(cityNameReal, country, currentData, unit, username);
 
         } catch (Exception e) {
             return "ERROR: " + e.getMessage();
@@ -53,7 +46,7 @@ public class OfflineWeatherService {
 
 
     private String saveOfflineDataInternal(String cityNameReal, String country, JsonNode currentData,
-                                           JsonNode forecastData, String unit, String username) {
+                                           String unit, String username) {
         try {
 
             File dbFolder = new File(DB_FOLDER);
@@ -98,54 +91,17 @@ public class OfflineWeatherService {
                 double windSpeed = current.get("wind_speed_10m").asDouble();
                 int weatherCode = current.get("weather_code").asInt();
 
-
-                double tempMin = temp;
-                double tempMax = temp;
-                if (forecastData != null && forecastData.has("daily")) {
-                    JsonNode daily = forecastData.get("daily");
-                    if (daily.has("temperature_2m_min") && !daily.get("temperature_2m_min").isEmpty()) {
-                        tempMin = daily.get("temperature_2m_min").get(0).asDouble();
-                    }
-                    if (daily.has("temperature_2m_max") && !daily.get("temperature_2m_max").isEmpty()) {
-                        tempMax = daily.get("temperature_2m_max").get(0).asDouble();
-                    }
-                }
-
-
                 String weatherDesc = WeatherCodeDecoder.decode(weatherCode);
 
                 writer.println("city=" + cityNameReal);
+                writer.println("country=" + country);
                 writer.println("unit=" + unit);
-
-
-                writer.println("");
-                writer.println("[FORECAST]");
-                writer.println("date,temp_max,temp_min,weather,wind,rain_prob");
-
-                if (forecastData != null && forecastData.has("daily")) {
-                    JsonNode daily = forecastData.get("daily");
-                    JsonNode times = daily.get("time");
-                    JsonNode tempMaxArr = daily.get("temperature_2m_max");
-                    JsonNode tempMinArr = daily.get("temperature_2m_min");
-                    JsonNode weatherCodes = daily.get("weather_code");
-                    JsonNode windSpeedArr = daily.get("wind_speed_10m_max");
-                    JsonNode precipProb = daily.get("precipitation_probability_max");
-
-                    int daysCount = Math.min(5, times.size());
-                    for (int i = 0; i < daysCount; i++) {
-                        String dateStr = times.get(i).asText();
-                        double tMax = tempMaxArr.get(i).asDouble();
-                        double tMin = tempMinArr.get(i).asDouble();
-                        int wCode = weatherCodes.get(i).asInt();
-                        double wSpeed = windSpeedArr.get(i).asDouble();
-                        int rainProb = precipProb.get(i).asInt();
-
-                        String weather = WeatherCodeDecoder.decode(wCode);
-
-                        writer.println(String.format("%s,%.1f,%.1f,%s,%.1f,%d",
-                                dateStr, tMax, tMin, weather, wSpeed, rainProb));
-                    }
-                }
+                writer.println("temp=" + String.format("%.1f", temp));
+                writer.println("feels_like=" + String.format("%.1f", feelsLike));
+                writer.println("humidity=" + humidity);
+                writer.println("wind=" + String.format("%.1f", windSpeed));
+                writer.println("weather=" + weatherDesc);
+                writer.println("weather_code=" + weatherCode);
             }
 
             return "SUCCESS: Offline data saved!\nCity: " + cityNameReal + ", " + country +
@@ -213,17 +169,9 @@ public class OfflineWeatherService {
 
                 String temp = "";
                 String feelsLike = "";
-                String tempMin = "";
-                String tempMax = "";
                 String humidity = "";
                 String wind = "";
                 String weather = "";
-                String description = "";
-
-
-                StringBuilder forecastBuilder = new StringBuilder();
-                boolean inForecast = false;
-                boolean isHeader = true;
 
                 while ((line = reader.readLine()) != null) {
 
@@ -239,36 +187,14 @@ public class OfflineWeatherService {
                         temp = line.substring(5);
                     } else if (line.startsWith("feels_like=")) {
                         feelsLike = line.substring(11);
-                    } else if (line.startsWith("temp_min=")) {
-                        tempMin = line.substring(9);
-                    } else if (line.startsWith("temp_max=")) {
-                        tempMax = line.substring(9);
                     } else if (line.startsWith("humidity=")) {
                         humidity = line.substring(9);
                     } else if (line.startsWith("wind=")) {
                         wind = line.substring(5);
                     } else if (line.startsWith("weather=")) {
                         weather = line.substring(8);
-                    } else if (line.startsWith("description=")) {
-                        description = line.substring(12);
                     } else if (line.startsWith("unit=")) {
                         unit = line.substring(5);
-                    } else if (line.equals("[FORECAST]")) {
-                        inForecast = true;
-                    } else if (inForecast && !line.isEmpty() && !line.startsWith("#")) {
-                        if (isHeader) {
-                            isHeader = false;
-                        } else {
-
-                            String[] parts = line.split(",");
-                            if (parts.length >= 6) {
-                                forecastBuilder.append("  ").append(parts[0])
-                                        .append(" - Max: ").append(parts[1]).append("°").append(unit)
-                                        .append(" Min: ").append(parts[2]).append("°").append(unit)
-                                        .append(" | ").append(parts[3])
-                                        .append(" | Rain: ").append(parts[5]).append("%\n");
-                            }
-                        }
                     }
                 }
 
@@ -283,19 +209,18 @@ public class OfflineWeatherService {
                 StringBuilder result = new StringBuilder();
                 result.append("=== OFFLINE WEATHER DATA ===\n");
                 result.append("[Last updated: ").append(downloadTime).append("]\n\n");
-                result.append("City: ").append(city).append(", ").append(country).append("\n\n");
+                result.append("City: ").append(city);
+                if (!country.isEmpty()) {
+                    result.append(", ").append(country);
+                }
+                result.append("\n\n");
                 result.append("CURRENT WEATHER:\n");
                 result.append("Temperature: ").append(temp).append("°").append(unit).append("\n");
                 result.append("Feels like: ").append(feelsLike).append("°").append(unit).append("\n");
-                result.append("Range: ").append(tempMin).append("° - ").append(tempMax).append("°").append(unit).append("\n");
-                result.append("Weather: ").append(weather).append(" (").append(description).append(")\n");
+                result.append("Weather: ").append(weather).append("\n");
                 result.append("Humidity: ").append(humidity).append("%\n");
                 result.append("Wind: ").append(wind).append(" km/h\n");
 
-                if (!forecastBuilder.isEmpty()) {
-                    result.append("\n5-DAY FORECAST:\n");
-                    result.append(forecastBuilder);
-                }
 
                 return result.toString();
             }
@@ -308,69 +233,7 @@ public class OfflineWeatherService {
 
 
     public String getOfflineForecast(String username) {
-        try {
-            String sanitizedUser = username.replaceAll("[^a-zA-Z0-9]", "_");
-            String filename = "offline_cache_" + sanitizedUser + ".csv";
-            File cacheFile = new File(DB_FOLDER, filename);
-
-            if (!cacheFile.exists()) {
-                return "ERROR: No offline data available.";
-            }
-
-
-            StringBuilder result = new StringBuilder();
-            boolean inForecast = false;
-            boolean isHeader = true;
-            String cachedDate = "";
-            String unit = "C";
-
-            try (BufferedReader reader = new BufferedReader(new FileReader(cacheFile))) {
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    if (line.startsWith("# Date: ")) {
-                        cachedDate = line.substring(8).trim();
-                    } else if (line.startsWith("unit=")) {
-                        unit = line.substring(5);
-                    } else if (line.equals("[FORECAST]")) {
-                        inForecast = true;
-                    } else if (inForecast && !line.isEmpty() && !line.startsWith("#")) {
-                        if (isHeader) {
-                            isHeader = false;
-                        } else {
-
-                            String[] parts = line.split(",");
-                            if (parts.length >= 6) {
-                                if (!result.isEmpty()) {
-                                    result.append("|||");
-                                }
-                                result.append(parts[0]).append("\n");
-                                result.append("Max: ").append(parts[1]).append("°").append(unit).append("\n");
-                                result.append("Min: ").append(parts[2]).append("°").append(unit).append("\n");
-                                result.append("Weather: ").append(parts[3]).append("\n");
-                                result.append("Wind: ").append(parts[4]).append(" km/h\n");
-                                result.append("Rain: ").append(parts[5]).append("%");
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            String today = java.time.LocalDate.now().toString();
-            if (!cachedDate.equals(today)) {
-                return "ERROR: Offline data outdated (from " + cachedDate + ")";
-            }
-
-            if (result.isEmpty()) {
-                return "No forecast data available|||N/A|||N/A|||N/A|||N/A";
-            }
-
-            return result.toString();
-
-        } catch (Exception e) {
-            return "ERROR: " + e.getMessage();
-        }
+        return "ERROR: Forecast data is not available in offline mode. Only current weather data is cached.";
     }
 
 

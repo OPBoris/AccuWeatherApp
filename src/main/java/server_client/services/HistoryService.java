@@ -2,6 +2,7 @@ package server_client.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
+import server_client.ApiUrls;
 import server_client.WeatherCodeDecoder;
 
 import java.io.*;
@@ -13,8 +14,6 @@ public class HistoryService {
     private static final int MAX_HISTORY_ENTRIES = 10;
     private static final String DB_FOLDER = "src/main/DB";
     private static final String HISTORY_CSV = DB_FOLDER + "/search_history.csv";
-    private static final String OPEN_METEO_HISTORY_URL =
-            "https://archive-api.open-meteo.com/v1/archive?latitude=%s&longitude=%s&start_date=%s&end_date=%s&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,windspeed_10m_max,weathercode&timezone=auto";
 
     private final ApiClient apiClient;
 
@@ -23,7 +22,7 @@ public class HistoryService {
     }
 
 
-    public void saveToHistory(String city, String username) {
+    public synchronized void saveToHistory(String city, String username) {
         try {
 
             File dbFolder = new File(DB_FOLDER);
@@ -94,14 +93,14 @@ public class HistoryService {
             java.time.LocalDate startDate = endDate.minusDays(29);
 
 
-            String url = String.format(OPEN_METEO_HISTORY_URL, lat, lon, startDate, endDate);
+            String url = String.format(ApiUrls.HISTORICAL, lat, lon, startDate, endDate);
             JsonNode weatherData = apiClient.makeOpenMeteoCall(url);
 
             if (weatherData == null || !weatherData.has("daily")) {
                 return "ERROR: Unable to fetch historical data from Open-Meteo.";
             }
 
-            return exportHistoricalDataToCSVInternal(cityName, lat, lon, unit, username, weatherData);
+            return exportHistoricalDataToCSVInternal(cityName, unit, username, weatherData);
 
         } catch (Exception e) {
             return "ERROR: " + e.getMessage();
@@ -109,7 +108,7 @@ public class HistoryService {
     }
 
 
-    private String exportHistoricalDataToCSVInternal(String cityName, double lat, double lon, String unit,
+    private String exportHistoricalDataToCSVInternal(String cityName, String unit,
                                                      String username, JsonNode weatherData) {
         try {
 
@@ -203,7 +202,7 @@ public class HistoryService {
             java.time.LocalDate startDate = endDate.minusDays(4);
 
 
-            String url = String.format(OPEN_METEO_HISTORY_URL, lat, lon, startDate, endDate);
+            String url = String.format(ApiUrls.HISTORICAL, lat, lon, startDate, endDate);
             JsonNode data = apiClient.makeOpenMeteoCall(url);
 
             if (data == null || !data.has("daily")) {

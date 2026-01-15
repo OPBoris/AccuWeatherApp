@@ -5,10 +5,23 @@ Group project for ODE
 * Jan Kerschbaum (ic24b005@technikum-wien.at)
 * Opacic-Peric Boris (ic24b042@technikum-wien.at)
 
-API: https://developer.accuweather.com/core-weather/location-key-currentconditions
+API: RICHTIGE API einfügen
 
 
 ## Meilensteine (Wöchentliches Update)
 
--Projektdetails erstellt
--Git Repo aufsetzen
+- Projektdetails erstellt
+- Git Repo aufsetzen
+- Requirements gesammelt und definiert
+- API Recherche und Auswahl
+- API Anbindung implementiert
+- Grundlegende UI erstellt
+- Must Have Features implementiert
+- Testing und Bugfixing
+- Should Have Features implementiert
+- Testing und Bugfixing
+- Nice to Have Features implementiert
+- Testing und Bugfixing
+- Overkill Features implementiert
+- Finales Testing und Optimierung
+- Projektabschluss

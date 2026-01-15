@@ -22,14 +22,17 @@ public class UIFavoritesHandler {
 
     public void toggleFavorite(String city, Consumer<String> onSuccess, Consumer<String> onError) {
         if (city == null || city.trim().length() < 3) {
-            onError.accept("Please enter a valid city first.");
+            onError.accept("Please provide a valid city name.");
             return;
         }
 
         String trimmedCity = city.trim();
-        String command = isCurrentCityFavorite
-                ? "REMOVE_FAVORITE " + trimmedCity
-                : "ADD_FAVORITE " + trimmedCity;
+        String command;
+        if (isCurrentCityFavorite) {
+            command = "REMOVE_FAVORITE " + trimmedCity;
+        } else {
+            command = "ADD_FAVORITE " + trimmedCity;
+        }
 
         Task<String> task = new Task<>() {
             @Override
@@ -43,12 +46,12 @@ public class UIFavoritesHandler {
             if (resp.startsWith("OK")) {
                 isCurrentCityFavorite = !isCurrentCityFavorite;
                 String action;
-                if (isCurrentCityFavorite){
+                if (isCurrentCityFavorite) {
                     action = "added";
                 } else {
                     action = "removed";
                 }
-                onSuccess.accept(trimmedCity + " was added to favorites " + action + ".");
+                onSuccess.accept(trimmedCity + " " + action + " " + "to favourites.");
             } else {
                 onError.accept("Error: " + resp);
             }
@@ -56,7 +59,13 @@ public class UIFavoritesHandler {
 
         task.setOnFailed(e -> {
             Throwable ex = task.getException();
-            onError.accept("Error: " + (ex != null ? ex.getMessage() : "Unknown Error"));
+            String errorMessage;
+            if (ex != null) {
+                errorMessage = ex.getMessage();
+            } else {
+                errorMessage = "Unknown error";
+            }
+            onError.accept("Error: " + errorMessage);
         });
 
         new Thread(task, "toggle-favorite").start();
@@ -118,11 +127,11 @@ public class UIFavoritesHandler {
         if (btnFavorite == null) return;
 
         if (isCurrentCityFavorite) {
-            btnFavorite.setStyle("-fx-text-fill: gold; -fx-font-size: 16px; -fx-font-weight: bold;");
+            btnFavorite.setStyle("-fx-text-fill: gold; -fx-font-weight: bold;");
             btnFavorite.setText("★");
         } else {
             String color = isDarkMode ? "white" : "black";
-            btnFavorite.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 16px;");
+            btnFavorite.setStyle("-fx-text-fill: " + color + ";");
             btnFavorite.setText("☆");
         }
     }

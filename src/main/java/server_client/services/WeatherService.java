@@ -25,7 +25,6 @@ public class WeatherService {
         this.favoritesService = new FavoritesService();
     }
 
-
     public String getCurrentWeather(double lat, double lon, String unit,
                                     boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         return currentWeatherService.getCurrentWeather(lat, lon, unit, showHumidity, showWind, showFeelsLike);
@@ -63,7 +62,6 @@ public class WeatherService {
         }
     }
 
-
     public String getForecastByCity(String cityName, String unit,
                                     boolean showFeelsLike, boolean showHumidity, boolean showWind) {
         try {
@@ -100,11 +98,9 @@ public class WeatherService {
         }
     }
 
-
     public String getRecentCities(String username) {
         return historyService.getRecentCities(username);
     }
-
 
     public String exportHistoricalDataToCSVByCity(String cityName, String unit, String username) {
         try {

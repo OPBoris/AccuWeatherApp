@@ -94,27 +94,7 @@ public class ClientHandler implements Runnable {
                 switch (command) {
                     case "GET_WEATHER":
                         if (parts.length > 1) {
-                            String args = parts[1].trim();
-
-                            boolean showFeelsLike = args.contains("FEELS_LIKE=true");
-                            boolean showHumidity = args.contains("HUMIDITY=true");
-                            boolean showWind = args.contains("WIND=true");
-
-
-                            String cleanArgs = args.replaceAll("FEELS_LIKE=(true|false)", "")
-                                    .replaceAll("HUMIDITY=(true|false)", "")
-                                    .replaceAll("WIND=(true|false)", "")
-                                    .trim();
-
-                            String city = cleanArgs;
-
-                            if (cleanArgs.toUpperCase().endsWith(" F")) {
-                                currentUnit = "F";
-                                city = cleanArgs.substring(0, cleanArgs.length() - 2).trim();
-                            } else if (cleanArgs.toUpperCase().endsWith(" C")) {
-                                currentUnit = "C";
-                                city = cleanArgs.substring(0, cleanArgs.length() - 2).trim();
-                            }
+                            String city = parseAndSetFlags(parts[1].trim());
 
                             String response = weatherService.getWeatherByCity(city, currentUnit,
                                     currentUser.getUsername(), showHumidity, showWind, showFeelsLike);
@@ -128,28 +108,7 @@ public class ClientHandler implements Runnable {
 
                     case "GET_FORECAST":
                         if (parts.length > 1) {
-                            String args = parts[1].trim();
-
-
-                            boolean showFeelsLike = args.contains("FEELS_LIKE=true");
-                            boolean showHumidity = args.contains("HUMIDITY=true");
-                            boolean showWind = args.contains("WIND=true");
-
-
-                            String cleanArgs = args.replaceAll("FEELS_LIKE=(true|false)", "")
-                                    .replaceAll("HUMIDITY=(true|false)", "")
-                                    .replaceAll("WIND=(true|false)", "")
-                                    .trim();
-
-                            String city = cleanArgs;
-
-                            if (cleanArgs.toUpperCase().endsWith(" F")) {
-                                currentUnit = "F";
-                                city = cleanArgs.substring(0, cleanArgs.length() - 2).trim();
-                            } else if (cleanArgs.toUpperCase().endsWith(" C")) {
-                                currentUnit = "C";
-                                city = cleanArgs.substring(0, cleanArgs.length() - 2).trim();
-                            }
+                            String city = parseAndSetFlags(parts[1].trim());
 
                             String forecastResponse = weatherService.getForecastByCity(city, currentUnit,
                                     showFeelsLike, showHumidity, showWind);
@@ -163,17 +122,7 @@ public class ClientHandler implements Runnable {
 
                     case "GET_HISTORICAL":
                         if (parts.length > 1) {
-                            String args = parts[1].trim();
-
-                            String city = args;
-
-                            if (args.toUpperCase().endsWith(" F")) {
-                                currentUnit = "F";
-                                city = args.substring(0, args.length() - 2).trim();
-                            } else if (args.toUpperCase().endsWith(" C")) {
-                                currentUnit = "C";
-                                city = args.substring(0, args.length() - 2).trim();
-                            }
+                            String city = parseAndSetFlags(parts[1].trim());
 
                             String historicalResponse = weatherService.getHistoricalWeatherByCity(city, currentUnit);
                             sendMessage(writer, historicalResponse);
@@ -242,20 +191,10 @@ public class ClientHandler implements Runnable {
 
                     case "EXPORT_HISTORY":
                         if (parts.length > 1) {
-                            String args = parts[1].trim();
-                            String city = args;
-                            String exportUnit = currentUnit;
-
-                            if (args.toUpperCase().endsWith(" F")) {
-                                exportUnit = "F";
-                                city = args.substring(0, args.length() - 2).trim();
-                            } else if (args.toUpperCase().endsWith(" C")) {
-                                exportUnit = "C";
-                                city = args.substring(0, args.length() - 2).trim();
-                            }
+                            String city = parseAndSetFlags(parts[1].trim());
 
                             String exportResult = weatherService.exportHistoricalDataToCSVByCity(
-                                    city, exportUnit, currentUser.getUsername()
+                                    city, currentUnit, currentUser.getUsername()
                             );
                             sendMessage(writer, exportResult);
                             sendMessage(writer, "###END###");
@@ -268,21 +207,10 @@ public class ClientHandler implements Runnable {
                     case "SAVE_OFFLINE":
 
                         if (parts.length > 1) {
-                            String args = parts[1].trim();
-                            String city = args;
-                            String offlineUnit = currentUnit;
-
-
-                            if (args.toUpperCase().endsWith(" F")) {
-                                offlineUnit = "F";
-                                city = args.substring(0, args.length() - 2).trim();
-                            } else if (args.toUpperCase().endsWith(" C")) {
-                                offlineUnit = "C";
-                                city = args.substring(0, args.length() - 2).trim();
-                            }
+                            String city = parseAndSetFlags(parts[1].trim());
 
                             String saveResult = weatherService.saveOfflineData(
-                                    city, offlineUnit, currentUser.getUsername()
+                                    city, currentUnit, currentUser.getUsername()
                             );
                             sendMessage(writer, saveResult);
                             sendMessage(writer, "###END###");
@@ -404,6 +332,28 @@ public class ClientHandler implements Runnable {
                 System.err.println("Error closing client socket: " + e.getMessage());
             }
         }
+    }
+
+    private String parseAndSetFlags(String args) {
+        this.showFeelsLike = args.contains("FEELS_LIKE=true");
+        this.showHumidity = args.contains("HUMIDITY=true");
+        this.showWind = args.contains("WIND=true");
+
+        String cleanArgs = args.replaceAll("FEELS_LIKE=(true|false)", "")
+                .replaceAll("HUMIDITY=(true|false)", "")
+                .replaceAll("WIND=(true|false)", "")
+                .trim();
+
+        String substring = cleanArgs.substring(0, cleanArgs.length() - 2);
+        if (cleanArgs.toUpperCase().endsWith(" F")) {
+            this.currentUnit = "F";
+            return substring.trim();
+        } else if (cleanArgs.toUpperCase().endsWith(" C")) {
+            this.currentUnit = "C";
+            return substring.trim();
+        }
+
+        return cleanArgs;
     }
 }
 

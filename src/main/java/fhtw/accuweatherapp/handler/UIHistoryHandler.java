@@ -45,7 +45,7 @@ public class UIHistoryHandler {
         });
 
         task.setOnFailed(event -> {
-            System.err.println("Error loading history: " + task.getException().getMessage());
+            System.err.println("Error while loading history: " + task.getException().getMessage());
             comboBox.setItems(javafx.collections.FXCollections.observableArrayList());
             comboBox.getSelectionModel().clearSelection();
             comboBox.setValue(null);
@@ -110,12 +110,13 @@ public class UIHistoryHandler {
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
             String errorMsg;
-            if (exception != null){
+            if (exception != null) {
                 errorMsg = "Export error: " + exception.getMessage();
             } else {
                 errorMsg = "Export error: Unknown error";
             }
             onError.accept(errorMsg);
+
         });
 
         new Thread(task, "export-csv-call").start();
