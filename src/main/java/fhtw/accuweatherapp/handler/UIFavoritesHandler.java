@@ -22,7 +22,7 @@ public class UIFavoritesHandler {
 
     public void toggleFavorite(String city, Consumer<String> onSuccess, Consumer<String> onError) {
         if (city == null || city.trim().length() < 3) {
-            onError.accept("Bitte erst eine gültige Stadt eingeben.");
+            onError.accept("Please provide a valid city name.");
             return;
         }
 
@@ -47,13 +47,13 @@ public class UIFavoritesHandler {
                 isCurrentCityFavorite = !isCurrentCityFavorite;
                 String action;
                 if (isCurrentCityFavorite) {
-                    action = "hinzugefügt";
+                    action = "added";
                 } else {
-                    action = "entfernt";
+                    action = "removed";
                 }
-                onSuccess.accept(trimmedCity + " wurde zu Favoriten " + action + ".");
+                onSuccess.accept(trimmedCity + " " + action + " " + "to favourites.");
             } else {
-                onError.accept("Fehler: " + resp);
+                onError.accept("Error: " + resp);
             }
         });
 
@@ -63,9 +63,9 @@ public class UIFavoritesHandler {
             if (ex != null) {
                 errorMessage = ex.getMessage();
             } else {
-                errorMessage = "Unbekannter Fehler";
+                errorMessage = "Unknown error";
             }
-            onError.accept("Fehler: " + errorMessage);
+            onError.accept("Error: " + errorMessage);
         });
 
         new Thread(task, "toggle-favorite").start();
