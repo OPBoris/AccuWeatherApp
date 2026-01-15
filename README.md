@@ -1,11 +1,11 @@
 # AccuWeatherApp
-Group project for ODE
+Gruppenprojekt im Rahmen des Faches objektorientierte Dienstentwicklung am Technikum Wien.
 
 * Binder Moritz (ic24b002@technikum-wien.at)
 * Jan Kerschbaum (ic24b005@technikum-wien.at)
 * Opacic-Peric Boris (ic24b042@technikum-wien.at)
 
-API: RICHTIGE API einfügen
+API Website: https://open-meteo.com/en/docs
 
 
 ## Meilensteine (Wöchentliches Update)
@@ -25,3 +25,11 @@ API: RICHTIGE API einfügen
 - Overkill Features implementiert
 - Finales Testing und Optimierung
 - Projektabschluss
+
+## Starten der Anwendung:
+1. WeatherServer.java ausführen
+2. Client.java ausführen
+3. UI öffnet sich automatisch
+4. Gewünschte Stadt eingeben und Wetterdaten abrufen
+5. Wetterdaten werden in der UI angezeigt
+6. Anwendung beenden, wenn fertig

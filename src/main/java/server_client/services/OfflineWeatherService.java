@@ -1,8 +1,8 @@
 package server_client.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
 import server_client.ApiUrls;
+import server_client.JsonParser;
 import server_client.WeatherCodeDecoder;
 
 import java.io.*;
@@ -31,7 +31,7 @@ public class OfflineWeatherService {
                 tempUnit = "celsius";
             }
             String currentUrl = String.format(ApiUrls.CURRENT_WEATHER, lat, lon, tempUnit);
-            JsonNode currentData = apiClient.makeOpenMeteoCall(currentUrl);
+            String currentData = apiClient.makeOpenMeteoCall(currentUrl);
 
             if (currentData == null) {
                 return "ERROR: Unable to fetch weather data for offline cache.";
@@ -45,13 +45,14 @@ public class OfflineWeatherService {
     }
 
 
-    private String saveOfflineDataInternal(String cityNameReal, String country, JsonNode currentData,
+    private String saveOfflineDataInternal(String cityNameReal, String country, String jsonData,
                                            String unit, String username) {
         try {
 
             File dbFolder = new File(DB_FOLDER);
-            if (!dbFolder.exists()) {
-                dbFolder.mkdirs();
+            boolean success = dbFolder.mkdirs();
+            if (!success) {
+                System.err.println("ERROR: DB folder creation failed or already exists.");
             }
 
 
@@ -62,7 +63,7 @@ public class OfflineWeatherService {
 
             deleteOldOfflineCache(cacheFile);
 
-            if (currentData == null) {
+            if (jsonData == null) {
                 return "ERROR: Unable to fetch weather data for offline cache.";
             }
 
@@ -84,12 +85,16 @@ public class OfflineWeatherService {
 
                 writer.println("[CURRENT]");
 
-                JsonNode current = currentData.get("current");
-                double temp = current.get("temperature_2m").asDouble();
-                double feelsLike = current.get("apparent_temperature").asDouble();
-                int humidity = current.get("relative_humidity_2m").asInt();
-                double windSpeed = current.get("wind_speed_10m").asDouble();
-                int weatherCode = current.get("weather_code").asInt();
+                int currentStart = jsonData.indexOf("\"current\":");
+                int objectStart = jsonData.indexOf("{", currentStart);
+                int objectEnd = JsonParser.findMatchingBrace(jsonData, objectStart);
+                String currentBlock = jsonData.substring(objectStart, objectEnd + 1);
+
+                double temp = JsonParser.parseDoubleValue(currentBlock, "temperature_2m");
+                double feelsLike = JsonParser.parseDoubleValue(currentBlock, "apparent_temperature");
+                int humidity = JsonParser.parseIntValue(currentBlock, "relative_humidity_2m");
+                double windSpeed = JsonParser.parseDoubleValue(currentBlock, "wind_speed_10m");
+                int weatherCode = JsonParser.parseIntValue(currentBlock, "weather_code");
 
                 String weatherDesc = WeatherCodeDecoder.decode(weatherCode);
 
@@ -136,7 +141,10 @@ public class OfflineWeatherService {
             String today = java.time.LocalDate.now().toString();
             if (cachedDate != null && !cachedDate.equals(today)) {
                 reader.close();
-                cacheFile.delete();
+                boolean success = cacheFile.delete();
+                if (!success) {
+                    System.err.println("ERROR: Cache can't be deleted.");
+                }
                 System.out.println("Deleted old offline cache from: " + cachedDate);
             }
 
@@ -230,12 +238,6 @@ public class OfflineWeatherService {
             return "ERROR: Failed to load offline data: " + e.getMessage();
         }
     }
-
-
-    public String getOfflineForecast(String username) {
-        return "ERROR: Forecast data is not available in offline mode. Only current weather data is cached.";
-    }
-
 
     public boolean isOnline() {
         try {

@@ -40,8 +40,6 @@ public class UIController {
     @FXML
     private TextArea txt_field_day5;
     @FXML
-    private CheckBox check_history;
-    @FXML
     private ListView<String> list_favorites;
     @FXML
     private Button btn_safe_favourite;

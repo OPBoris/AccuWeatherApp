@@ -3,8 +3,8 @@ package fhtw.accuweatherapp.handler;
 import javafx.concurrent.Task;
 import javafx.scene.control.TextArea;
 import server_client.ClientConnection;
+import fhtw.accuweatherapp.Callback;
 
-import java.util.function.Consumer;
 
 
 public class UIWeatherHandler {
@@ -37,25 +37,24 @@ public class UIWeatherHandler {
 
     public void loadCurrentWeather(String city, String unit, boolean feelsLikeChecked,
                                    boolean humidityChecked, boolean windChecked,
-                                   Consumer<String> onSuccess, Consumer<String> onError) {
+                                   Callback<String> onSuccess, Callback<String> onError) {
         Task<String> task = new Task<>() {
             @Override
             protected String call() throws Exception {
-                StringBuilder cmd = new StringBuilder("GET_WEATHER ");
-                cmd.append(city).append(" ").append(unit);
-                cmd.append(" FEELS_LIKE=").append(feelsLikeChecked);
-                cmd.append(" HUMIDITY=").append(humidityChecked);
-                cmd.append(" WIND=").append(windChecked);
-                return connection.sendCommand(cmd.toString());
+                String cmd = "GET_WEATHER " + city + " " + unit +
+                        " FEELS_LIKE=" + feelsLikeChecked +
+                        " HUMIDITY=" + humidityChecked +
+                        " WIND=" + windChecked;
+                return connection.sendCommand(cmd);
             }
         };
 
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
             if (resp != null && !resp.isEmpty()) {
-                onSuccess.accept(resp);
+                onSuccess.call(resp);
             } else {
-                onError.accept("No response from server.");
+                onError.call("No response from server.");
             }
         });
 
@@ -67,7 +66,7 @@ public class UIWeatherHandler {
             } else {
                 errorMsg = "Connection error: Unknown error";
             }
-            onError.accept(errorMsg);
+            onError.call(errorMsg);
         });
 
         new Thread(task, "current-weather-call").start();
@@ -76,8 +75,8 @@ public class UIWeatherHandler {
 
     public void loadForecastOrHistory(String city, String unit, boolean historyChecked,
                                       boolean feelsLikeChecked, boolean humidityChecked,
-                                      boolean windChecked, Consumer<String[]> onSuccess,
-                                      Consumer<String> onError) {
+                                      boolean windChecked, Callback<String[]> onSuccess,
+                                      Callback<String> onError) {
         String command;
         String dataType;
 
@@ -109,7 +108,7 @@ public class UIWeatherHandler {
             String resp = task.getValue();
             if (resp != null && !resp.isEmpty() && !resp.startsWith("ERROR")) {
                 String[] dataArray = resp.split("\\|\\|\\|");
-                onSuccess.accept(dataArray);
+                onSuccess.call(dataArray);
             } else {
                 String errorMsg;
                 if (resp != null) {
@@ -117,7 +116,7 @@ public class UIWeatherHandler {
                 } else {
                     errorMsg = "No " + dataType + " available";
                 }
-                onError.accept(errorMsg);
+                onError.call(errorMsg);
             }
         });
 
@@ -129,7 +128,7 @@ public class UIWeatherHandler {
             } else {
                 errorMsg = "Unknown error";
             }
-            onError.accept(errorMsg);
+            onError.call(errorMsg);
         });
 
         new Thread(task, dataType + "-call").start();

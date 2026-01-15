@@ -2,7 +2,6 @@ package server_client;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 
 public class ClientConnection implements Closeable {
     private final String host;
@@ -25,8 +24,8 @@ public class ClientConnection implements Closeable {
         closeInternal();
 
         socket = new Socket(host, port);
-        reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
+        reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         connected = true;
     }
 

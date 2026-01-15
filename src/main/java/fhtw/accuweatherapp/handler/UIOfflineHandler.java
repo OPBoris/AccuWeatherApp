@@ -1,10 +1,10 @@
 package fhtw.accuweatherapp.handler;
-
+import fhtw.accuweatherapp.Callback;
 import javafx.concurrent.Task;
 import javafx.scene.control.TextArea;
 import server_client.ClientConnection;
 
-import java.util.function.Consumer;
+
 
 
 public class UIOfflineHandler {
@@ -16,10 +16,10 @@ public class UIOfflineHandler {
     }
 
 
-    public void saveOfflineData(String city, String unit, Consumer<String> onSuccess,
-                                Consumer<String> onError) {
+    public void saveOfflineData(String city, String unit, Callback<String> onSuccess,
+                                Callback<String> onError) {
         if (city == null || city.trim().length() < 3) {
-            onError.accept("Please enter a valid city name to download offline data.");
+            onError.call("Please enter a valid city name to download offline data.");
             return;
         }
 
@@ -33,9 +33,9 @@ public class UIOfflineHandler {
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
             if (resp != null && !resp.isEmpty()) {
-                onSuccess.accept(resp);
+                onSuccess.call(resp);
             } else {
-                onError.accept("No response from server.");
+                onError.call("No response from server.");
             }
         });
 
@@ -47,14 +47,14 @@ public class UIOfflineHandler {
             } else {
                 errorMsg = "Error saving offline data: Unknown error";
             }
-            onError.accept(errorMsg);
+            onError.call(errorMsg);
         });
 
         new Thread(task, "save-offline-call").start();
     }
 
 
-    public void loadOfflineCurrentWeather(Consumer<String> onSuccess, Consumer<String> onError) {
+    public void loadOfflineCurrentWeather(Callback<String> onSuccess, Callback<String> onError) {
         Task<String> task = new Task<>() {
             @Override
             protected String call() throws Exception {
@@ -65,9 +65,9 @@ public class UIOfflineHandler {
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
             if (resp != null && !resp.isEmpty()) {
-                onSuccess.accept(resp);
+                onSuccess.call(resp);
             } else {
-                onError.accept("No offline data available.");
+                onError.call("No offline data available.");
             }
         });
 
@@ -79,67 +79,23 @@ public class UIOfflineHandler {
             } else {
                 errorMsg = "Error loading offline data: Unknown error";
             }
-            onError.accept(errorMsg);
+            onError.call(errorMsg);
         });
 
         new Thread(task, "load-offline-call").start();
     }
 
-    public void loadOfflineForecast(Consumer<String[]> onSuccess, Consumer<String> onError) {
-        Task<String> task = new Task<>() {
-            @Override
-            protected String call() throws Exception {
-                return connection.sendCommand("GET_OFFLINE_FORECAST");
-            }
-        };
-
-        task.setOnSucceeded(e -> {
-            String resp = task.getValue();
-            if (resp != null && !resp.isEmpty() && !resp.startsWith("ERROR")) {
-                String[] dataArray = resp.split("\\|\\|\\|");
-                onSuccess.accept(dataArray);
-            } else {
-                onError.accept("No offline forecast data available.");
-            }
-        });
-
-        task.setOnFailed(e -> {
-            onError.accept("Offline forecast error");
-        });
-
-        new Thread(task, "load-offline-forecast-call").start();
-    }
-
-
-    public void loadAllOfflineData(Consumer<String> onCurrentWeather,
-                                   Consumer<String[]> onForecast,
+    public void loadAllOfflineData(Callback<String> onCurrentWeather,
+                                   Callback<String[]> onForecast,
                                    TextArea day1, TextArea day2, TextArea day3,
                                    TextArea day4, TextArea day5) {
 
-        loadOfflineCurrentWeather(onCurrentWeather, data -> {});
-
-
-        loadOfflineForecast(
-                dataArray -> {
-                    if (dataArray.length > 0) day1.setText(dataArray[0]);
-                    if (dataArray.length > 1) day2.setText(dataArray[1]);
-                    if (dataArray.length > 2) day3.setText(dataArray[2]);
-                    if (dataArray.length > 3) day4.setText(dataArray[3]);
-                    if (dataArray.length > 4) day5.setText(dataArray[4]);
-
-                    if (dataArray.length < 5) day5.setText("N/A");
-                    if (dataArray.length < 4) day4.setText("N/A");
-                    if (dataArray.length < 3) day3.setText("N/A");
-                    if (dataArray.length < 2) day2.setText("N/A");
-                    if (dataArray.length < 1) day1.setText("N/A");
-                },
-                error -> {
-                    day1.setText("No offline data");
-                    day2.setText("N/A");
-                    day3.setText("N/A");
-                    day4.setText("N/A");
-                    day5.setText("N/A");
-                }
-        );
+        loadOfflineCurrentWeather(onCurrentWeather, data -> {
+        });
+        day1.setText("No offline\nforecast data\navailable.");
+        day2.setText("");
+        day3.setText("");
+        day4.setText("");
+        day5.setText("");
     }
 }

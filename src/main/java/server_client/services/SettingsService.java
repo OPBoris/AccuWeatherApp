@@ -1,7 +1,6 @@
 package server_client.services;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 
 public class SettingsService {
 
@@ -12,12 +11,12 @@ public class SettingsService {
     }
 
     public synchronized void saveUserSettings(String username, boolean showHumidity, boolean showWind, boolean showFeelsLike,
-                                 String unit, String standardCity) {
+                                              String unit, String standardCity) {
         if (username == null || username.isEmpty() || username.equalsIgnoreCase("Guest")) return;
 
 
         String filename = DB_FOLDER + "/settings_" + username + ".csv";
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename)))) {
             writer.write("showHumidity,showWind,showFeelsLike,unit,standardCity");
             writer.newLine();
 
@@ -38,7 +37,7 @@ public class SettingsService {
         File file = new File(filename);
 
         if (file.exists()) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
                 reader.readLine();
                 String line = reader.readLine();
                 if (line != null) {

@@ -1,5 +1,6 @@
 package fhtw.accuweatherapp.handler;
 
+import fhtw.accuweatherapp.Callback;
 import javafx.concurrent.Task;
 import javafx.scene.control.ComboBox;
 import server_client.ClientConnection;
@@ -7,7 +8,7 @@ import server_client.ClientConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
+
 
 
 public class UIHistoryHandler {
@@ -54,7 +55,7 @@ public class UIHistoryHandler {
         new Thread(task, "load-history").start();
     }
 
-    public void showHistory(Consumer<String> onResponse) {
+    public void showHistory(Callback<String> onResponse) {
         Task<String> task = new Task<>() {
             @Override
             protected String call() throws Exception {
@@ -64,19 +65,19 @@ public class UIHistoryHandler {
 
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
-            if (resp != null){
-                onResponse.accept(resp);
+            if (resp != null) {
+                onResponse.call(resp);
             } else {
-                onResponse.accept("No response from server.");
+                onResponse.call("No response from server.");
             }
         });
 
         task.setOnFailed(e -> {
             Throwable ex = task.getException();
             if (ex != null) {
-                onResponse.accept("Error: " + ex.getMessage());
+                onResponse.call("Error: " + ex.getMessage());
             } else {
-                onResponse.accept("Unknown error occurred.");
+                onResponse.call("Unknown error occurred.");
             }
         });
 
@@ -84,10 +85,10 @@ public class UIHistoryHandler {
     }
 
 
-    public void exportHistoricalDataCSV(String city, String unit, Consumer<String> onSuccess,
-                                        Consumer<String> onError) {
+    public void exportHistoricalDataCSV(String city, String unit, Callback<String> onSuccess,
+                                        Callback<String> onError) {
         if (city == null || city.trim().length() < 3) {
-            onError.accept("Please enter a city name first to export historical data.");
+            onError.call("Please enter a city name first to export historical data.");
             return;
         }
 
@@ -101,9 +102,9 @@ public class UIHistoryHandler {
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
             if (resp != null && !resp.isEmpty()) {
-                onSuccess.accept(resp);
+                onSuccess.call(resp);
             } else {
-                onError.accept("No response from server.");
+                onError.call("No response from server.");
             }
         });
 
@@ -115,7 +116,7 @@ public class UIHistoryHandler {
             } else {
                 errorMsg = "Export error: Unknown error";
             }
-            onError.accept(errorMsg);
+            onError.call(errorMsg);
 
         });
 

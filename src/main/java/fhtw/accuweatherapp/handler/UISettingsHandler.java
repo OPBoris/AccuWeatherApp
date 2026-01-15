@@ -6,8 +6,8 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import server_client.ClientConnection;
+import fhtw.accuweatherapp.Callback;
 
-import java.util.function.Consumer;
 
 
 public class UISettingsHandler {
@@ -56,13 +56,13 @@ public class UISettingsHandler {
     }
 
 
-    public void setUnitCelsius(Consumer<String> onResponse) {
+    public void setUnitCelsius(Callback<String> onResponse) {
         unit = "C";
         sendCommand("SET_UNIT C", onResponse);
     }
 
 
-    public void setUnitFahrenheit(Consumer<String> onResponse) {
+    public void setUnitFahrenheit(Callback<String> onResponse) {
         unit = "F";
         sendCommand("SET_UNIT F", onResponse);
     }
@@ -86,18 +86,18 @@ public class UISettingsHandler {
     }
 
 
-    public void toggleHistoryMode(Consumer<String> onMessage) {
+    public void toggleHistoryMode(Callback<String> onMessage) {
         historyChecked = !historyChecked;
         if (historyChecked) {
-            onMessage.accept("History mode enabled. Click Search to view historical data.");
+            onMessage.call("History mode enabled. Click Search to view historical data.");
         } else {
-            onMessage.accept("Forecast mode enabled. Click Search to view forecast.");
+            onMessage.call("Forecast mode enabled. Click Search to view forecast.");
         }
     }
 
 
     public void toggleDarkMode(BorderPane mainPane, Button btnUiMode, TextField txtCity,
-                               Consumer<String> onMessage) {
+                               Callback<String> onMessage) {
         isDarkMode = !isDarkMode;
 
         if (isDarkMode) {
@@ -111,7 +111,7 @@ public class UISettingsHandler {
             if (txtCity != null) {
                 txtCity.setStyle("-fx-text-fill: white; -fx-prompt-text-fill: #ffffff;");
             }
-            onMessage.accept("Dark Mode activated.");
+            onMessage.call("Dark Mode activated.");
         } else {
             if (mainPane != null) {
                 mainPane.setStyle("");
@@ -123,14 +123,14 @@ public class UISettingsHandler {
             if (txtCity != null) {
                 txtCity.setStyle("");
             }
-            onMessage.accept("Light Mode activated.");
+            onMessage.call("Light Mode activated.");
         }
     }
 
 
-    public void setStandardCity(String city, Consumer<String> onResponse, Consumer<String> onError) {
+    public void setStandardCity(String city, Callback<String> onResponse, Callback<String> onError) {
         if (city == null || city.trim().isEmpty()) {
-            onError.accept("Please enter a city.");
+            onError.call("Please enter a city.");
             return;
         }
         sendCommand("SET_STANDARD " + city.trim(), onResponse);
@@ -150,7 +150,7 @@ public class UISettingsHandler {
         if (checkFeelsLike != null) checkFeelsLike.setSelected(showFeelsLike);
     }
 
-    private void sendCommand(String command, Consumer<String> onResponse) {
+    private void sendCommand(String command, Callback<String> onResponse) {
         Task<String> task = new Task<>() {
             @Override
             protected String call() throws Exception {
@@ -160,7 +160,7 @@ public class UISettingsHandler {
 
         task.setOnSucceeded(e -> {
             if (onResponse != null) {
-                onResponse.accept(task.getValue());
+                onResponse.call(task.getValue());
             }
         });
 

@@ -1,8 +1,8 @@
 package server_client.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
 import server_client.ApiUrls;
+import server_client.JsonParser;
 import server_client.WeatherCodeDecoder;
 
 
@@ -25,7 +25,7 @@ public class CurrentWeatherService {
                 tempUnit = "celsius";
             }
             String url = String.format(ApiUrls.CURRENT_WEATHER, lat, lon, tempUnit);
-            JsonNode data = apiClient.makeOpenMeteoCall(url);
+            String data = apiClient.makeOpenMeteoCall(url);
             return processCurrentWeather(data, unit, showFeelsLike, showHumidity, showWind);
         } catch (Exception e) {
             return "ERROR: " + e.getMessage();
@@ -33,45 +33,52 @@ public class CurrentWeatherService {
     }
 
 
-    private String processCurrentWeather(JsonNode data, String unit,
+    private String processCurrentWeather(String jsonData, String unit,
                                          boolean showFeelsLike, boolean showHumidity, boolean showWind) {
-        if (data == null || !data.has("current")) {
+        if (jsonData == null || !jsonData.contains("\"current\"")) {
             return "ERROR: Unable to fetch weather data.";
         }
 
         StringBuilder sb = new StringBuilder();
 
+        try {
+            int currentStart = jsonData.indexOf("\"current\":");
+            if (currentStart == -1) {
+                return "ERROR: Unable to fetch weather data.";
+            }
 
-        JsonNode current = data.get("current");
+            int objectStart = jsonData.indexOf("{", currentStart);
+            int objectEnd = JsonParser.findMatchingBrace(jsonData, objectStart);
+            String currentBlock = jsonData.substring(objectStart, objectEnd + 1);
 
-        double temp = current.get("temperature_2m").asDouble();
-        double feelsLike = current.get("apparent_temperature").asDouble();
-        int humidity = current.get("relative_humidity_2m").asInt();
-        double windSpeed = current.get("wind_speed_10m").asDouble();
-        int weatherCode = current.get("weather_code").asInt();
+            double temp = JsonParser.parseDoubleValue(currentBlock, "temperature_2m");
+            double feelsLike = JsonParser.parseDoubleValue(currentBlock, "apparent_temperature");
+            int humidity = JsonParser.parseIntValue(currentBlock, "relative_humidity_2m");
+            double windSpeed = JsonParser.parseDoubleValue(currentBlock, "wind_speed_10m");
+            int weatherCode = JsonParser.parseIntValue(currentBlock, "weather_code");
 
+            String weatherDescription = WeatherCodeDecoder.decode(weatherCode);
 
-        String weatherDescription = WeatherCodeDecoder.decode(weatherCode);
+            sb.append("CURRENT WEATHER:\n");
+            sb.append(String.format("Temperature: %.1f°%s\n", temp, unit));
+            sb.append("Weather: ").append(weatherDescription).append("\n");
 
+            if (showFeelsLike) {
+                sb.append(String.format("Feels like: %.1f°%s\n", feelsLike, unit));
+            }
 
-        sb.append("CURRENT WEATHER:\n");
-        sb.append(String.format("Temperature: %.1f°%s\n", temp, unit));
-        sb.append("Weather: ").append(weatherDescription).append("\n");
+            if (showHumidity) {
+                sb.append(String.format("Humidity: %d%%\n", humidity));
+            }
 
-        if (showFeelsLike) {
-            sb.append(String.format("Feels like: %.1f°%s\n", feelsLike, unit));
+            if (showWind) {
+                sb.append(String.format("Wind Speed: %.1f km/h\n", windSpeed));
+            }
+
+            return sb.toString();
+        } catch (Exception e) {
+            return "ERROR: Unable to parse weather data.";
         }
-
-
-        if (showHumidity) {
-            sb.append(String.format("Humidity: %d%%\n", humidity));
-        }
-
-        if (showWind) {
-            sb.append(String.format("Wind Speed: %.1f km/h\n", windSpeed));
-        }
-
-        return sb.toString();
     }
 }
 

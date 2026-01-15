@@ -1,5 +1,5 @@
 package server_client;
-//BIBs entfernt
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;

@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
@@ -77,8 +77,8 @@ public class ClientHandler implements Runnable {
     public void run() {
 
         try (
-                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8))
+                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()))
         ) {
             String clientMessage;
 
@@ -224,13 +224,6 @@ public class ClientHandler implements Runnable {
 
                         String offlineData = weatherService.loadOfflineData(currentUser.getUsername());
                         sendMessage(writer, offlineData);
-                        sendMessage(writer, "###END###");
-                        break;
-
-                    case "GET_OFFLINE_FORECAST":
-
-                        String offlineForecast = weatherService.getOfflineForecast(currentUser.getUsername());
-                        sendMessage(writer, offlineForecast);
                         sendMessage(writer, "###END###");
                         break;
 

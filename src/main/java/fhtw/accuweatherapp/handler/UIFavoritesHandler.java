@@ -1,5 +1,5 @@
 package fhtw.accuweatherapp.handler;
-
+import fhtw.accuweatherapp.Callback;
 import javafx.concurrent.Task;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
@@ -8,7 +8,6 @@ import server_client.ClientConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 
 
 public class UIFavoritesHandler {
@@ -20,9 +19,9 @@ public class UIFavoritesHandler {
         this.connection = connection;
     }
 
-    public void toggleFavorite(String city, Consumer<String> onSuccess, Consumer<String> onError) {
+    public void toggleFavorite(String city, Callback<String> onSuccess, Callback<String> onError) {
         if (city == null || city.trim().length() < 3) {
-            onError.accept("Please provide a valid city name.");
+            onError.call("Please provide a valid city name.");
             return;
         }
 
@@ -51,9 +50,9 @@ public class UIFavoritesHandler {
                 } else {
                     action = "removed";
                 }
-                onSuccess.accept(trimmedCity + " " + action + " " + "to favourites.");
+                onSuccess.call(trimmedCity + " " + action + " " + "to favourites.");
             } else {
-                onError.accept("Error: " + resp);
+                onError.call("Error: " + resp);
             }
         });
 
@@ -65,7 +64,7 @@ public class UIFavoritesHandler {
             } else {
                 errorMessage = "Unknown error";
             }
-            onError.accept("Error: " + errorMessage);
+            onError.call("Error: " + errorMessage);
         });
 
         new Thread(task, "toggle-favorite").start();

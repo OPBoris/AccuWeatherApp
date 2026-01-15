@@ -1,23 +1,17 @@
 package server_client;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 
 public class ApiClient {
-    private final ObjectMapper objectMapper;
 
     public ApiClient() {
-        this.objectMapper = new ObjectMapper();
     }
 
-    public JsonNode makeOpenMeteoCall(String urlString) throws Exception {
+    public String makeOpenMeteoCall(String urlString) throws Exception {
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -31,7 +25,7 @@ public class ApiClient {
             if (responseCode == 200) {
 
                 BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
+                        new InputStreamReader(connection.getInputStream())
                 );
                 StringBuilder response = new StringBuilder();
                 String line;
@@ -39,7 +33,7 @@ public class ApiClient {
                     response.append(line);
                 }
                 reader.close();
-                return objectMapper.readTree(response.toString());
+                return response.toString();
 
             } else {
                 System.err.println("Open-Meteo API Error: HTTP " + responseCode);

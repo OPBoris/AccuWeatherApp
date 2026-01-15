@@ -1,12 +1,9 @@
 package server_client.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
 
 
 public class WeatherService {
-
-    private final ApiClient apiClient;
 
     private final GeocodingService geocodingService;
     private final CurrentWeatherService currentWeatherService;
@@ -16,7 +13,7 @@ public class WeatherService {
     private final FavoritesService favoritesService;
 
     public WeatherService() {
-        this.apiClient = new ApiClient();
+        ApiClient apiClient = new ApiClient();
         this.geocodingService = new GeocodingService(apiClient);
         this.currentWeatherService = new CurrentWeatherService(apiClient);
         this.forecastService = new ForecastService(apiClient);
@@ -33,20 +30,20 @@ public class WeatherService {
 
     public String getWeatherByCity(String cityName, String unit, String username, boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
-            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            String geoData = geocodingService.getCoordinates(cityName);
             if (geoData == null) {
                 return "ERROR: City not found. Please check name.";
             }
 
-            double lat = geoData.get("lat").asDouble();
-            double lon = geoData.get("lon").asDouble();
-            String cityNameReal = geoData.get("name").asText();
-            String country;
-            if (geoData.has("country")) {
-                country = geoData.get("country").asText();
-            } else {
-                country = "";
+            String[] parts = geoData.split("\\|");
+            if (parts.length < 2) {
+                return "ERROR: Invalid geocoding data.";
             }
+
+            double lat = Double.parseDouble(parts[0]);
+            double lon = Double.parseDouble(parts[1]);
+            String cityNameReal = parts.length > 2 ? parts[2] : cityName;
+            String country = parts.length > 3 ? parts[3] : "";
 
             String weather = getCurrentWeather(lat, lon, unit, showHumidity, showWind, showFeelsLike);
 
@@ -65,13 +62,18 @@ public class WeatherService {
     public String getForecastByCity(String cityName, String unit,
                                     boolean showFeelsLike, boolean showHumidity, boolean showWind) {
         try {
-            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            String geoData = geocodingService.getCoordinates(cityName);
             if (geoData == null) {
                 return "ERROR: City not found. Please check name.";
             }
 
-            double lat = geoData.get("lat").asDouble();
-            double lon = geoData.get("lon").asDouble();
+            String[] parts = geoData.split("\\|");
+            if (parts.length < 2) {
+                return "ERROR: Invalid geocoding data.";
+            }
+
+            double lat = Double.parseDouble(parts[0]);
+            double lon = Double.parseDouble(parts[1]);
 
             return forecastService.getForecast(lat, lon, unit, showFeelsLike, showHumidity, showWind);
 
@@ -83,13 +85,18 @@ public class WeatherService {
 
     public String getHistoricalWeatherByCity(String cityName, String unit) {
         try {
-            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            String geoData = geocodingService.getCoordinates(cityName);
             if (geoData == null) {
                 return "ERROR: City not found. Please check name.";
             }
 
-            double lat = geoData.get("lat").asDouble();
-            double lon = geoData.get("lon").asDouble();
+            String[] parts = geoData.split("\\|");
+            if (parts.length < 2) {
+                return "ERROR: Invalid geocoding data.";
+            }
+
+            double lat = Double.parseDouble(parts[0]);
+            double lon = Double.parseDouble(parts[1]);
 
             return historyService.getHistoricalWeather(lat, lon, unit);
 
@@ -104,14 +111,19 @@ public class WeatherService {
 
     public String exportHistoricalDataToCSVByCity(String cityName, String unit, String username) {
         try {
-            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            String geoData = geocodingService.getCoordinates(cityName);
             if (geoData == null) {
                 return "ERROR: City not found. Cannot export data.";
             }
 
-            double lat = geoData.get("lat").asDouble();
-            double lon = geoData.get("lon").asDouble();
-            String cityNameReal = geoData.get("name").asText();
+            String[] parts = geoData.split("\\|");
+            if (parts.length < 2) {
+                return "ERROR: Invalid geocoding data.";
+            }
+
+            double lat = Double.parseDouble(parts[0]);
+            double lon = Double.parseDouble(parts[1]);
+            String cityNameReal = parts.length > 2 ? parts[2] : cityName;
 
             return historyService.exportHistoricalDataToCSV(cityNameReal, lat, lon, unit, username);
 
@@ -139,15 +151,20 @@ public class WeatherService {
 
     public String saveOfflineData(String cityName, String unit, String username) {
         try {
-            JsonNode geoData = geocodingService.getCoordinates(cityName);
+            String geoData = geocodingService.getCoordinates(cityName);
             if (geoData == null) {
                 return "ERROR: City not found. Cannot save offline data.";
             }
 
-            double lat = geoData.get("lat").asDouble();
-            double lon = geoData.get("lon").asDouble();
-            String cityNameReal = geoData.get("name").asText();
-            String country = geoData.has("country") ? geoData.get("country").asText() : "";
+            String[] parts = geoData.split("\\|");
+            if (parts.length < 2) {
+                return "ERROR: Invalid geocoding data.";
+            }
+
+            double lat = Double.parseDouble(parts[0]);
+            double lon = Double.parseDouble(parts[1]);
+            String cityNameReal = parts.length > 2 ? parts[2] : cityName;
+            String country = parts.length > 3 ? parts[3] : "";
 
             return offlineService.saveOfflineData(cityNameReal, country, lat, lon, unit, username);
 
@@ -164,8 +181,6 @@ public class WeatherService {
         return offlineService.isOnline();
     }
 
-    public String getOfflineForecast(String username) {
-        return offlineService.getOfflineForecast(username);
-    }
+
 }
 

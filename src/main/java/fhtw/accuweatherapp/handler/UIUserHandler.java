@@ -3,8 +3,8 @@ package fhtw.accuweatherapp.handler;
 import javafx.concurrent.Task;
 import javafx.scene.control.MenuButton;
 import server_client.ClientConnection;
+import fhtw.accuweatherapp.Callback;
 
-import java.util.function.Consumer;
 
 
 public class UIUserHandler {
@@ -15,8 +15,8 @@ public class UIUserHandler {
         this.connection = connection;
     }
 
-    public void switchUser(String username, Consumer<UserSettings> onSuccess,
-                           Consumer<String> onError) {
+    public void switchUser(String username, Callback<UserSettings> onSuccess,
+                           Callback<String> onError) {
         Task<String> task = new Task<>() {
             @Override
             protected String call() throws Exception {
@@ -47,9 +47,9 @@ public class UIUserHandler {
                         settings.unit = "C";
                     }
 
-                    onSuccess.accept(settings);
+                    onSuccess.call(settings);
                 } else {
-                    onError.accept("Invalid settings format from server.");
+                    onError.call("Invalid settings format from server.");
                 }
             } else {
                 String errorMessage;
@@ -58,11 +58,11 @@ public class UIUserHandler {
                 } else {
                     errorMessage = "No response from server.";
                 }
-                onError.accept(errorMessage);
+                onError.call(errorMessage);
             }
         });
 
-        task.setOnFailed(e -> onError.accept("Error user switching."));
+        task.setOnFailed(e -> onError.call("Error user switching."));
 
         new Thread(task, "switch-user").start();
     }

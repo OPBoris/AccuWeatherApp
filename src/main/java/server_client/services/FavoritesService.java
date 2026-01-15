@@ -1,8 +1,6 @@
 package server_client.services;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,13 +9,13 @@ public class FavoritesService {
     private static final String DB_PATH = "src/main/DB/";
 
     public FavoritesService() {
-        try {
-            Files.createDirectories(Paths.get(DB_PATH));
-        } catch (IOException e) {
-            System.out.println("Error: The system cannot create the DB folder at the specified path: " + DB_PATH + " -> " + e.getMessage());
+        File dbDir = new File(DB_PATH);
+        if (!dbDir.exists()) {
+            if (!dbDir.mkdirs()) {
+                System.out.println("Error: The system cannot create the DB folder at the specified path: " + DB_PATH);
+            }
         }
     }
-
 
     public synchronized boolean addFavorite(String city, String username) {
         String favFile = DB_PATH + username + "_favorites.txt";
