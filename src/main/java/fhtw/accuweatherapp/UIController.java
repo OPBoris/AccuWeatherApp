@@ -223,17 +223,17 @@ public class UIController {
 
     @FXML
     protected void onCheckFeelsLike() {
-        settingsHandler.toggleFeelsLike(() -> refreshWeatherIfPossible());
+        settingsHandler.toggleFeelsLike(this::refreshWeatherIfPossible);
     }
 
     @FXML
     protected void onCheckHumidity() {
-        settingsHandler.toggleHumidity(() -> refreshWeatherIfPossible());
+        settingsHandler.toggleHumidity(this::refreshWeatherIfPossible);
     }
 
     @FXML
     protected void onCheckWind() {
-        settingsHandler.toggleWind(() -> refreshWeatherIfPossible());
+        settingsHandler.toggleWind(this::refreshWeatherIfPossible);
     }
 
     @FXML
@@ -242,7 +242,7 @@ public class UIController {
             txt_field_cur_weather.setText(msg);
 
             String city = txt_field_city.getText();
-            if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
+            if (city != null && city.trim().length() >= 3) {
                 onSearch();
             }
         });
@@ -310,7 +310,7 @@ public class UIController {
 
     private void refreshWeatherIfPossible() {
         String city = txt_field_city.getText();
-        if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
+        if (city != null && city.trim().length() >= 3) {
             loadCurrentWeather(city.trim());
             loadForecastOrHistory(city.trim());
         }

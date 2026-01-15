@@ -101,10 +101,14 @@ public class UIHistoryHandler {
 
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
-            String errorMsg = exception != null
-                    ? "Export error: " + exception.getMessage()
-                    : "Export error: Unknown error";
+            String errorMsg;
+            if (exception != null) {
+                errorMsg = "Export error: " + exception.getMessage();
+            } else {
+                errorMsg = "Export error: Unknown error";
+            }
             onError.accept(errorMsg);
+
         });
 
         new Thread(task, "export-csv-call").start();

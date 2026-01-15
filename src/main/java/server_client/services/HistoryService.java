@@ -22,7 +22,7 @@ public class HistoryService {
     }
 
 
-    public void saveToHistory(String city, String username) {
+    public synchronized void saveToHistory(String city, String username) {
         try {
 
             File dbFolder = new File(DB_FOLDER);

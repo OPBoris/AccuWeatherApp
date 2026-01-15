@@ -1,2 +1,2 @@
 showHumidity,showWind,showFeelsLike,unit,standardCity
-false,false,true,C,New York
+true,true,true,C,Vienna

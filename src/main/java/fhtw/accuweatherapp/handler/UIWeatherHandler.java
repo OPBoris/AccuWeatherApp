@@ -61,9 +61,12 @@ public class UIWeatherHandler {
 
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
-            String errorMsg = exception != null
-                    ? "Connection error: " + exception.getMessage()
-                    : "Connection error: Unknown error";
+            String errorMsg;
+            if (exception != null) {
+                errorMsg = "Connection error: " + exception.getMessage();
+            } else {
+                errorMsg = "Connection error: Unknown error";
+            }
             onError.accept(errorMsg);
         });
 
@@ -75,8 +78,19 @@ public class UIWeatherHandler {
                                       boolean feelsLikeChecked, boolean humidityChecked,
                                       boolean windChecked, Consumer<String[]> onSuccess,
                                       Consumer<String> onError) {
-        String command = historyChecked ? "GET_HISTORICAL " : "GET_FORECAST ";
-        String dataType = historyChecked ? "historical data" : "forecast";
+        String command;
+        if (historyChecked) {
+            command = "GET_HISTORICAL ";
+        } else {
+            command = "GET_FORECAST ";
+        }
+
+        String dataType;
+        if (historyChecked) {
+            dataType = "historical data";
+        } else {
+            dataType = "forecast";
+        }
 
         Task<String> task = new Task<>() {
             @Override
@@ -85,8 +99,8 @@ public class UIWeatherHandler {
                 cmd.append(city).append(" ").append(unit);
 
                 if (!historyChecked) {
-                    cmd.append(" FEELS_LIKE=").append(feelsLikeChecked);
-                    cmd.append(" HUMIDITY=").append(humidityChecked);
+                    cmd.append(" FEELS_LIKE=").append(feelsLikeChecked);    //same hier
+                    cmd.append(" HUMIDITY=").append(humidityChecked);   //Wird das überhaupt benötigt wenn Forcast gar nicht humidity kann?
                     cmd.append(" WIND=").append(windChecked);
                 }
 
@@ -100,14 +114,24 @@ public class UIWeatherHandler {
                 String[] dataArray = resp.split("\\|\\|\\|");
                 onSuccess.accept(dataArray);
             } else {
-                String errorMsg = resp != null ? resp : "No " + dataType + " available";
+                String errorMsg;
+                if (resp != null) {
+                    errorMsg = resp;
+                } else {
+                    errorMsg = "No " + dataType + " available";
+                }
                 onError.accept(errorMsg);
             }
         });
 
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
-            String errorMsg = exception != null ? "Error: " + exception.getMessage() : "Unknown error";
+            String errorMsg;
+            if (exception != null) {
+                errorMsg = "Error: " + exception.getMessage();
+            } else {
+                errorMsg = "Unknown error";
+            }
             onError.accept(errorMsg);
         });
 

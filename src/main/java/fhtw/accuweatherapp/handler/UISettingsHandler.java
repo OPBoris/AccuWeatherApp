@@ -54,7 +54,7 @@ public class UISettingsHandler {
     public void setUnit(String unit) {
         this.unit = unit;
     }
-
+    //NOT USED?
     public void setHumidityChecked(boolean humidityChecked) {
         this.humidityChecked = humidityChecked;
     }
