@@ -2,12 +2,11 @@ package server_client.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
+import server_client.ApiUrls;
 import server_client.WeatherCodeDecoder;
 
 
 public class ForecastService {
-    private static final String FORECAST_URL =
-            "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max&temperature_unit=%s&timezone=auto&forecast_days=5";
 
     private final ApiClient apiClient;
 
@@ -20,7 +19,7 @@ public class ForecastService {
                               boolean showFeelsLike, boolean showHumidity, boolean showWind) {
         try {
             String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
-            String url = String.format(FORECAST_URL, lat, lon, tempUnit);
+            String url = String.format(ApiUrls.FORECAST, lat, lon, tempUnit);
             JsonNode data = apiClient.makeOpenMeteoCall(url);
             return processForecast(data, unit, showFeelsLike, showHumidity, showWind);
         } catch (Exception e) {
@@ -45,6 +44,8 @@ public class ForecastService {
             JsonNode weatherCodes = daily.get("weather_code");
             JsonNode precipProb = daily.get("precipitation_probability_max");
             JsonNode windSpeed = daily.get("wind_speed_10m_max");
+            JsonNode humidity = daily.get("relative_humidity_2m_max");
+            JsonNode feelsLike = daily.get("apparent_temperature_max");
 
             int daysCount = Math.min(5, times.size());
 
@@ -57,6 +58,14 @@ public class ForecastService {
                 double windSpeedVal = windSpeed.get(dayIndex).asDouble();
 
 
+                double feelsLikeVal = (feelsLike != null && feelsLike.has(dayIndex) && !feelsLike.get(dayIndex).isNull())
+                    ? feelsLike.get(dayIndex).asDouble()
+                    : Double.NaN;
+
+                int humidityVal = (humidity != null && humidity.has(dayIndex) && !humidity.get(dayIndex).isNull())
+                    ? humidity.get(dayIndex).asInt()
+                    : -1;
+
                 String weatherDescription = WeatherCodeDecoder.decode(weatherCode);
 
 
@@ -65,12 +74,16 @@ public class ForecastService {
                 dayForecast.append("Max: ").append(String.format("%.1f", tempMaxVal)).append("°").append(unit).append("\n");
                 dayForecast.append("Min: ").append(String.format("%.1f", tempMinVal)).append("°").append(unit).append("\n");
                 dayForecast.append("Weather: ").append(weatherDescription).append("\n");
-
-                if (showWind) {
-                    dayForecast.append("Wind: ").append(String.format("%.1f", windSpeedVal)).append(" km/h\n");
-                }
-
                 dayForecast.append("Rain: ").append(rainProbability).append("%");
+                if (showWind) {
+                    dayForecast.append("\nWind: ").append(String.format("%.1f", windSpeedVal)).append(" km/h");
+                }
+                if (showFeelsLike && !Double.isNaN(feelsLikeVal)) {
+                    dayForecast.append("\nFeels Like: ").append(String.format("%.1f", feelsLikeVal)).append("°").append(unit);
+                }
+                if (showHumidity && humidityVal >= 0) {
+                    dayForecast.append("\nHumidity: ").append(humidityVal).append("%");
+                }
 
                 if (dayIndex > 0) {
                     result.append("|||");

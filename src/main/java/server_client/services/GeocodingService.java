@@ -2,6 +2,7 @@ package server_client.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
+import server_client.ApiUrls;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -10,9 +11,6 @@ import java.nio.charset.StandardCharsets;
 public class GeocodingService {
     private final ApiClient apiClient;
 
-
-    private static final String GEOCODING_URL =
-            "https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json";
 
     public GeocodingService(ApiClient apiClient) {
         this.apiClient = apiClient;
@@ -34,12 +32,12 @@ public class GeocodingService {
         String encodedCity = URLEncoder.encode(city.trim(), StandardCharsets.UTF_8);
 
 
-        String urlString = String.format(GEOCODING_URL, encodedCity);
+        String urlString = String.format(ApiUrls.GEOCODING, encodedCity);
         JsonNode response = apiClient.makeOpenMeteoCall(urlString);
 
 
         if (response != null && response.has("results") && response.get("results").isArray()
-                && response.get("results").size() > 0) {
+                && !response.get("results").isEmpty()) {
             JsonNode firstResult = response.get("results").get(0);
 
 
@@ -55,12 +53,5 @@ public class GeocodingService {
         }
 
         return null;
-    }
-
-    public boolean isValidCityName(String city) {
-        if (city == null || city.trim().length() < 3) {
-            return false;
-        }
-        return city.trim().matches("[a-zA-ZäöüÄÖÜß\\s\\-,]+");
     }
 }

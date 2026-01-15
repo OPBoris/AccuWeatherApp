@@ -45,7 +45,7 @@ public class UIHistoryHandler {
         });
 
         task.setOnFailed(event -> {
-            System.err.println("Fehler beim Laden der Historie: " + task.getException().getMessage());
+            System.err.println("Error while loading history: " + task.getException().getMessage());
             comboBox.setItems(javafx.collections.FXCollections.observableArrayList());
             comboBox.getSelectionModel().clearSelection();
             comboBox.setValue(null);
@@ -64,12 +64,12 @@ public class UIHistoryHandler {
 
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
-            onResponse.accept(resp != null ? resp : "Keine Historie verfügbar.");
+            onResponse.accept(resp != null ? resp : "No history available.");
         });
 
         task.setOnFailed(e -> {
             Throwable ex = task.getException();
-            onResponse.accept("Fehler: " + (ex != null ? ex.getMessage() : "Unbekannter Fehler"));
+            onResponse.accept("Error: " + (ex != null ? ex.getMessage() : "Unknown error."));
         });
 
         new Thread(task, "show-history").start();
