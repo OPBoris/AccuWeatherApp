@@ -170,7 +170,7 @@ public class UIController {
     }
 
     private void switchUser(String username) {
-        txt_field_cur_weather.setText("Wechsle Nutzer...");
+        txt_field_cur_weather.setText("Switching user...");
 
         userHandler.switchUser(
                 username,
@@ -213,12 +213,12 @@ public class UIController {
 
     @FXML
     protected void onUnitC() {
-        settingsHandler.setUnitCelsius(resp -> txt_field_cur_weather.setText("Einheit auf Celsius gesetzt."));
+        settingsHandler.setUnitCelsius(resp -> txt_field_cur_weather.setText("Switched unit to Celsius."));
     }
 
     @FXML
     protected void onUnitF() {
-        settingsHandler.setUnitFahrenheit(resp -> txt_field_cur_weather.setText("Einheit auf Fahrenheit gesetzt."));
+        settingsHandler.setUnitFahrenheit(resp -> txt_field_cur_weather.setText("Switched unit to Fahrenheit."));
     }
 
     @FXML
