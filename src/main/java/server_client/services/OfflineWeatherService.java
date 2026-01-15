@@ -24,7 +24,12 @@ public class OfflineWeatherService {
                                   String unit, String username) {
         try {
 
-            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String tempUnit;
+            if (unit.equalsIgnoreCase("F")) {
+                tempUnit = "fahrenheit";
+            } else {
+                tempUnit = "celsius";
+            }
             String currentUrl = String.format(ApiUrls.CURRENT_WEATHER, lat, lon, tempUnit);
             JsonNode currentData = apiClient.makeOpenMeteoCall(currentUrl);
 
@@ -105,7 +110,6 @@ public class OfflineWeatherService {
 
         } catch (Exception e) {
             System.err.println("Error saving offline data: " + e.getMessage());
-            e.printStackTrace();
             return "ERROR: Failed to save offline data: " + e.getMessage();
         }
     }

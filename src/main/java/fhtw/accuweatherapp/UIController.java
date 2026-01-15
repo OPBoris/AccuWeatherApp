@@ -213,12 +213,12 @@ public class UIController {
 
     @FXML
     protected void onUnitC() {
-        settingsHandler.setUnitCelsius(resp -> txt_field_cur_weather.setText("Switched unit to Celsius."));
+        settingsHandler.setUnitCelsius(resp -> txt_field_cur_weather.setText("Unit set to Celsius."));
     }
 
     @FXML
     protected void onUnitF() {
-        settingsHandler.setUnitFahrenheit(resp -> txt_field_cur_weather.setText("Switched unit to Fahrenheit."));
+        settingsHandler.setUnitFahrenheit(resp -> txt_field_cur_weather.setText("Unit set to Fahrenheit."));
     }
 
     @FXML

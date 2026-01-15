@@ -41,9 +41,12 @@ public class UIOfflineHandler {
 
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
-            String errorMsg = exception != null
-                    ? "Error saving offline data: " + exception.getMessage()
-                    : "Error saving offline data: Unknown error";
+            String errorMsg;
+            if (exception != null) {
+                errorMsg = "Error saving offline data: " + exception.getMessage();
+            } else {
+                errorMsg = "Error saving offline data: Unknown error";
+            }
             onError.accept(errorMsg);
         });
 
@@ -113,10 +116,7 @@ public class UIOfflineHandler {
                                    TextArea day1, TextArea day2, TextArea day3,
                                    TextArea day4, TextArea day5) {
 
-        loadOfflineCurrentWeather(
-                onCurrentWeather,
-                onCurrentWeather
-        );
+        loadOfflineCurrentWeather(onCurrentWeather, data -> {});
 
 
         loadOfflineForecast(

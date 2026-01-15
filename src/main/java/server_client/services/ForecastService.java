@@ -18,7 +18,12 @@ public class ForecastService {
     public String getForecast(double lat, double lon, String unit,
                               boolean showFeelsLike, boolean showHumidity, boolean showWind) {
         try {
-            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String tempUnit;
+            if (unit.equalsIgnoreCase("F")) {
+                tempUnit = "fahrenheit";
+            } else {
+                tempUnit = "celsius";
+            }
             String url = String.format(ApiUrls.FORECAST, lat, lon, tempUnit);
             JsonNode data = apiClient.makeOpenMeteoCall(url);
             return processForecast(data, unit, showFeelsLike, showHumidity, showWind);

@@ -54,18 +54,6 @@ public class UISettingsHandler {
     public void setUnit(String unit) {
         this.unit = unit;
     }
-    //NOT USED?
-    public void setHumidityChecked(boolean humidityChecked) {
-        this.humidityChecked = humidityChecked;
-    }
-
-    public void setWindChecked(boolean windChecked) {
-        this.windChecked = windChecked;
-    }
-
-    public void setFeelsLikeChecked(boolean feelsLikeChecked) {
-        this.feelsLikeChecked = feelsLikeChecked;
-    }
 
 
     public void setUnitCelsius(Consumer<String> onResponse) {
@@ -123,7 +111,7 @@ public class UISettingsHandler {
             if (txtCity != null) {
                 txtCity.setStyle("-fx-text-fill: white; -fx-prompt-text-fill: #ffffff;");
             }
-            onMessage.accept("Dark Mode aktiviert.");
+            onMessage.accept("Dark Mode activated.");
         } else {
             if (mainPane != null) {
                 mainPane.setStyle("");
@@ -135,14 +123,14 @@ public class UISettingsHandler {
             if (txtCity != null) {
                 txtCity.setStyle("");
             }
-            onMessage.accept("Light Mode aktiviert.");
+            onMessage.accept("Light Mode activated.");
         }
     }
 
 
     public void setStandardCity(String city, Consumer<String> onResponse, Consumer<String> onError) {
         if (city == null || city.trim().isEmpty()) {
-            onError.accept("Bitte eine Stadt eingeben.");
+            onError.accept("Please enter a city.");
             return;
         }
         sendCommand("SET_STANDARD " + city.trim(), onResponse);

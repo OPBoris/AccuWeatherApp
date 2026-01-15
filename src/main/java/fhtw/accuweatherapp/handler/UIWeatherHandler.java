@@ -79,16 +79,13 @@ public class UIWeatherHandler {
                                       boolean windChecked, Consumer<String[]> onSuccess,
                                       Consumer<String> onError) {
         String command;
+        String dataType;
+
         if (historyChecked) {
             command = "GET_HISTORICAL ";
-        } else {
-            command = "GET_FORECAST ";
-        }
-
-        String dataType;
-        if (historyChecked) {
             dataType = "historical data";
         } else {
+            command = "GET_FORECAST ";
             dataType = "forecast";
         }
 
@@ -99,8 +96,8 @@ public class UIWeatherHandler {
                 cmd.append(city).append(" ").append(unit);
 
                 if (!historyChecked) {
-                    cmd.append(" FEELS_LIKE=").append(feelsLikeChecked);    //same hier
-                    cmd.append(" HUMIDITY=").append(humidityChecked);   //Wird das überhaupt benötigt wenn Forcast gar nicht humidity kann?
+                    cmd.append(" FEELS_LIKE=").append(feelsLikeChecked);
+                    cmd.append(" HUMIDITY=").append(humidityChecked);
                     cmd.append(" WIND=").append(windChecked);
                 }
 

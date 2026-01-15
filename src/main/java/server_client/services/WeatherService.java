@@ -3,8 +3,6 @@ package server_client.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
 
-import java.util.List;
-
 
 public class WeatherService {
 
@@ -43,8 +41,12 @@ public class WeatherService {
             double lat = geoData.get("lat").asDouble();
             double lon = geoData.get("lon").asDouble();
             String cityNameReal = geoData.get("name").asText();
-            String country = geoData.has("country") ? geoData.get("country").asText() : "";
-
+            String country;
+            if (geoData.has("country")) {
+                country = geoData.get("country").asText();
+            } else {
+                country = "";
+            }
 
             String weather = getCurrentWeather(lat, lon, unit, showHumidity, showWind, showFeelsLike);
 
@@ -129,6 +131,7 @@ public class WeatherService {
     public String getFavorites(String username) {
         return favoritesService.getFavorites(username);
     }
+
 
     public boolean isFavorite(String city, String username) {
         return favoritesService.isFavorite(city, username);

@@ -64,12 +64,20 @@ public class UIHistoryHandler {
 
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
-            onResponse.accept(resp != null ? resp : "No history available.");
+            if (resp != null){
+                onResponse.accept(resp);
+            } else {
+                onResponse.accept("No response from server.");
+            }
         });
 
         task.setOnFailed(e -> {
             Throwable ex = task.getException();
-            onResponse.accept("Error: " + (ex != null ? ex.getMessage() : "Unknown error."));
+            if (ex != null) {
+                onResponse.accept("Error: " + ex.getMessage());
+            } else {
+                onResponse.accept("Unknown error occurred.");
+            }
         });
 
         new Thread(task, "show-history").start();
