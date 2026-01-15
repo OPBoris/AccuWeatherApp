@@ -45,7 +45,7 @@ public class UIHistoryHandler {
         });
 
         task.setOnFailed(event -> {
-            System.err.println("Fehler beim Laden der Historie: " + task.getException().getMessage());
+            System.err.println("Error loading history: " + task.getException().getMessage());
             comboBox.setItems(javafx.collections.FXCollections.observableArrayList());
             comboBox.getSelectionModel().clearSelection();
             comboBox.setValue(null);
@@ -64,12 +64,20 @@ public class UIHistoryHandler {
 
         task.setOnSucceeded(e -> {
             String resp = task.getValue();
-            onResponse.accept(resp != null ? resp : "Keine Historie verfügbar.");
+            if (resp != null){
+                onResponse.accept(resp);
+            } else {
+                onResponse.accept("No response from server.");
+            }
         });
 
         task.setOnFailed(e -> {
             Throwable ex = task.getException();
-            onResponse.accept("Fehler: " + (ex != null ? ex.getMessage() : "Unbekannter Fehler"));
+            if (ex != null) {
+                onResponse.accept("Error: " + ex.getMessage());
+            } else {
+                onResponse.accept("Unknown error occurred.");
+            }
         });
 
         new Thread(task, "show-history").start();
@@ -101,9 +109,12 @@ public class UIHistoryHandler {
 
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
-            String errorMsg = exception != null
-                    ? "Export error: " + exception.getMessage()
-                    : "Export error: Unknown error";
+            String errorMsg;
+            if (exception != null){
+                errorMsg = "Export error: " + exception.getMessage();
+            } else {
+                errorMsg = "Export error: Unknown error";
+            }
             onError.accept(errorMsg);
         });
 

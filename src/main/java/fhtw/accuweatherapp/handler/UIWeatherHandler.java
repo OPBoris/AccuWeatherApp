@@ -61,9 +61,12 @@ public class UIWeatherHandler {
 
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
-            String errorMsg = exception != null
-                    ? "Connection error: " + exception.getMessage()
-                    : "Connection error: Unknown error";
+            String errorMsg;
+            if (exception != null) {
+                errorMsg = "Connection error: " + exception.getMessage();
+            } else {
+                errorMsg = "Connection error: Unknown error";
+            }
             onError.accept(errorMsg);
         });
 
@@ -75,8 +78,16 @@ public class UIWeatherHandler {
                                       boolean feelsLikeChecked, boolean humidityChecked,
                                       boolean windChecked, Consumer<String[]> onSuccess,
                                       Consumer<String> onError) {
-        String command = historyChecked ? "GET_HISTORICAL " : "GET_FORECAST ";
-        String dataType = historyChecked ? "historical data" : "forecast";
+        String command;
+        String dataType;
+
+        if (historyChecked) {
+            command = "GET_HISTORICAL ";
+            dataType = "historical data";
+        } else {
+            command = "GET_FORECAST ";
+            dataType = "forecast";
+        }
 
         Task<String> task = new Task<>() {
             @Override
@@ -100,14 +111,24 @@ public class UIWeatherHandler {
                 String[] dataArray = resp.split("\\|\\|\\|");
                 onSuccess.accept(dataArray);
             } else {
-                String errorMsg = resp != null ? resp : "No " + dataType + " available";
+                String errorMsg;
+                if (resp != null) {
+                    errorMsg = resp;
+                } else {
+                    errorMsg = "No " + dataType + " available";
+                }
                 onError.accept(errorMsg);
             }
         });
 
         task.setOnFailed(e -> {
             Throwable exception = task.getException();
-            String errorMsg = exception != null ? "Error: " + exception.getMessage() : "Unknown error";
+            String errorMsg;
+            if (exception != null) {
+                errorMsg = "Error: " + exception.getMessage();
+            } else {
+                errorMsg = "Unknown error";
+            }
             onError.accept(errorMsg);
         });
 

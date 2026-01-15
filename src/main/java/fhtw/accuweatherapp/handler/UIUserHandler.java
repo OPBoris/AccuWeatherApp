@@ -43,7 +43,11 @@ public class UIUserHandler {
                     onError.accept("Invalid settings format from server.");
                 }
             } else {
-                onError.accept(response != null ? response : "No response from server.");
+                if (response != null) {
+                    onError.accept(response);
+                } else {
+                    onError.accept("No response from server.");
+                }
             }
         });
 

@@ -3,8 +3,6 @@ package server_client.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import server_client.ApiClient;
 
-import java.util.List;
-
 
 public class WeatherService {
 
@@ -27,9 +25,6 @@ public class WeatherService {
         this.favoritesService = new FavoritesService();
     }
 
-    public JsonNode getCoordinatesForCity(String city) throws Exception {
-        return geocodingService.getCoordinates(city);
-    }
 
     public String getCurrentWeather(double lat, double lon, String unit,
                                     boolean showHumidity, boolean showWind, boolean showFeelsLike) {
@@ -47,8 +42,12 @@ public class WeatherService {
             double lat = geoData.get("lat").asDouble();
             double lon = geoData.get("lon").asDouble();
             String cityNameReal = geoData.get("name").asText();
-            String country = geoData.has("country") ? geoData.get("country").asText() : "";
-
+            String country;
+            if (geoData.has("country")) {
+                country = geoData.get("country").asText();
+            } else {
+                country = "";
+            }
 
             String weather = getCurrentWeather(lat, lon, unit, showHumidity, showWind, showFeelsLike);
 
@@ -64,15 +63,6 @@ public class WeatherService {
         }
     }
 
-
-    public String getForecast(double lat, double lon, String unit,
-                              boolean showFeelsLike, boolean showHumidity, boolean showWind) {
-        return forecastService.getForecast(lat, lon, unit, showFeelsLike, showHumidity, showWind);
-    }
-
-    public String getForecastByCity(String cityName, String unit) {
-        return getForecastByCity(cityName, unit, true, true, true);
-    }
 
     public String getForecastByCity(String cityName, String unit,
                                     boolean showFeelsLike, boolean showHumidity, boolean showWind) {
@@ -92,9 +82,6 @@ public class WeatherService {
         }
     }
 
-    public String getHistoricalWeather(double lat, double lon, String unit) {
-        return historyService.getHistoricalWeather(lat, lon, unit);
-    }
 
     public String getHistoricalWeatherByCity(String cityName, String unit) {
         try {
@@ -113,17 +100,11 @@ public class WeatherService {
         }
     }
 
-    public void saveToHistory(String city, String username) {
-        historyService.saveToHistory(city, username);
-    }
 
     public String getRecentCities(String username) {
         return historyService.getRecentCities(username);
     }
 
-    public String exportHistoricalDataToCSV(String cityName, double lat, double lon, String unit, String username) {
-        return historyService.exportHistoricalDataToCSV(cityName, lat, lon, unit, username);
-    }
 
     public String exportHistoricalDataToCSVByCity(String cityName, String unit, String username) {
         try {
@@ -155,9 +136,6 @@ public class WeatherService {
         return favoritesService.getFavorites(username);
     }
 
-    public List<String> getFavoritesList(String username) {
-        return favoritesService.getFavoritesList(username);
-    }
 
     public boolean isFavorite(String city, String username) {
         return favoritesService.isFavorite(city, username);

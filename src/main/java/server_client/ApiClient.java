@@ -30,7 +30,6 @@ public class ApiClient {
             int responseCode = connection.getResponseCode();
 
             if (responseCode == 200) {
-                // Success - read response
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
                 );
@@ -73,7 +72,6 @@ public class ApiClient {
             int responseCode = connection.getResponseCode();
 
             if (responseCode == 200) {
-                // Success - read response
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
                 );

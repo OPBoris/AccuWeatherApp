@@ -20,18 +20,9 @@ public class UIFavoritesHandler {
         this.connection = connection;
     }
 
-    public boolean isCurrentCityFavorite() {
-        return isCurrentCityFavorite;
-    }
-
-    public void setCurrentCityFavorite(boolean favorite) {
-        this.isCurrentCityFavorite = favorite;
-    }
-
-
     public void toggleFavorite(String city, Consumer<String> onSuccess, Consumer<String> onError) {
-        if (city == null || city.trim().isEmpty() || city.trim().length() < 3) {
-            onError.accept("Bitte erst eine gültige Stadt eingeben.");
+        if (city == null || city.trim().length() < 3) {
+            onError.accept("Please enter a valid city first.");
             return;
         }
 
@@ -51,16 +42,21 @@ public class UIFavoritesHandler {
             String resp = task.getValue();
             if (resp.startsWith("OK")) {
                 isCurrentCityFavorite = !isCurrentCityFavorite;
-                String action = isCurrentCityFavorite ? "hinzugefügt" : "entfernt";
-                onSuccess.accept(trimmedCity + " wurde zu Favoriten " + action + ".");
+                String action;
+                if (isCurrentCityFavorite){
+                    action = "added";
+                } else {
+                    action = "removed";
+                }
+                onSuccess.accept(trimmedCity + " was added to favorites " + action + ".");
             } else {
-                onError.accept("Fehler: " + resp);
+                onError.accept("Error: " + resp);
             }
         });
 
         task.setOnFailed(e -> {
             Throwable ex = task.getException();
-            onError.accept("Fehler: " + (ex != null ? ex.getMessage() : "Unbekannter Fehler"));
+            onError.accept("Error: " + (ex != null ? ex.getMessage() : "Unknown Error"));
         });
 
         new Thread(task, "toggle-favorite").start();

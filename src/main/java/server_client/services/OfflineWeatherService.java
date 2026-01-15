@@ -27,7 +27,12 @@ public class OfflineWeatherService {
                                   String unit, String username) {
         try {
 
-            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String tempUnit;
+            if (unit.equalsIgnoreCase("F")) {
+                tempUnit = "fahrenheit";
+            } else {
+                tempUnit = "celsius";
+            }
             String currentUrl = String.format(CURRENT_WEATHER_URL, lat, lon, tempUnit);
             JsonNode currentData = apiClient.makeOpenMeteoCall(currentUrl);
 
@@ -98,10 +103,10 @@ public class OfflineWeatherService {
                 double tempMax = temp;
                 if (forecastData != null && forecastData.has("daily")) {
                     JsonNode daily = forecastData.get("daily");
-                    if (daily.has("temperature_2m_min") && daily.get("temperature_2m_min").size() > 0) {
+                    if (daily.has("temperature_2m_min") && !daily.get("temperature_2m_min").isEmpty()) {
                         tempMin = daily.get("temperature_2m_min").get(0).asDouble();
                     }
-                    if (daily.has("temperature_2m_max") && daily.get("temperature_2m_max").size() > 0) {
+                    if (daily.has("temperature_2m_max") && !daily.get("temperature_2m_max").isEmpty()) {
                         tempMax = daily.get("temperature_2m_max").get(0).asDouble();
                     }
                 }
@@ -149,7 +154,6 @@ public class OfflineWeatherService {
 
         } catch (Exception e) {
             System.err.println("Error saving offline data: " + e.getMessage());
-            e.printStackTrace();
             return "ERROR: Failed to save offline data: " + e.getMessage();
         }
     }
@@ -288,7 +292,7 @@ public class OfflineWeatherService {
                 result.append("Humidity: ").append(humidity).append("%\n");
                 result.append("Wind: ").append(wind).append(" km/h\n");
 
-                if (forecastBuilder.length() > 0) {
+                if (!forecastBuilder.isEmpty()) {
                     result.append("\n5-DAY FORECAST:\n");
                     result.append(forecastBuilder);
                 }
@@ -337,7 +341,7 @@ public class OfflineWeatherService {
 
                             String[] parts = line.split(",");
                             if (parts.length >= 6) {
-                                if (result.length() > 0) {
+                                if (!result.isEmpty()) {
                                     result.append("|||");
                                 }
                                 result.append(parts[0]).append("\n");
@@ -358,7 +362,7 @@ public class OfflineWeatherService {
                 return "ERROR: Offline data outdated (from " + cachedDate + ")";
             }
 
-            if (result.length() == 0) {
+            if (result.isEmpty()) {
                 return "No forecast data available|||N/A|||N/A|||N/A|||N/A";
             }
 
@@ -383,9 +387,5 @@ public class OfflineWeatherService {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private double celsiusToFahrenheit(double celsius) {
-        return (celsius * 9.0 / 5.0) + 32.0;
     }
 }

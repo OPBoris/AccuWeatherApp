@@ -39,7 +39,7 @@ public class GeocodingService {
 
 
         if (response != null && response.has("results") && response.get("results").isArray()
-                && response.get("results").size() > 0) {
+                && !response.get("results").isEmpty()) {
             JsonNode firstResult = response.get("results").get(0);
 
 
@@ -55,12 +55,5 @@ public class GeocodingService {
         }
 
         return null;
-    }
-
-    public boolean isValidCityName(String city) {
-        if (city == null || city.trim().length() < 3) {
-            return false;
-        }
-        return city.trim().matches("[a-zA-ZäöüÄÖÜß\\s\\-,]+");
     }
 }

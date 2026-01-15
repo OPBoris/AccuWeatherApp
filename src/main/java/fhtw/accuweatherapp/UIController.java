@@ -40,8 +40,6 @@ public class UIController {
     @FXML
     private TextArea txt_field_day5;
     @FXML
-    private CheckBox check_history;
-    @FXML
     private ListView<String> list_favorites;
     @FXML
     private Button btn_safe_favourite;
@@ -170,7 +168,7 @@ public class UIController {
     }
 
     private void switchUser(String username) {
-        txt_field_cur_weather.setText("Wechsle Nutzer...");
+        txt_field_cur_weather.setText("Switching user...");
 
         userHandler.switchUser(
                 username,
@@ -213,12 +211,12 @@ public class UIController {
 
     @FXML
     protected void onUnitC() {
-        settingsHandler.setUnitCelsius(resp -> txt_field_cur_weather.setText("Einheit auf Celsius gesetzt."));
+        settingsHandler.setUnitCelsius(resp -> txt_field_cur_weather.setText("Unit set to Celsius."));
     }
 
     @FXML
     protected void onUnitF() {
-        settingsHandler.setUnitFahrenheit(resp -> txt_field_cur_weather.setText("Einheit auf Fahrenheit gesetzt."));
+        settingsHandler.setUnitFahrenheit(resp -> txt_field_cur_weather.setText("Unit set to Fahrenheit."));
     }
 
     @FXML
@@ -242,7 +240,7 @@ public class UIController {
             txt_field_cur_weather.setText(msg);
 
             String city = txt_field_city.getText();
-            if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
+            if (city != null && city.trim().length() >= 3) {
                 onSearch();
             }
         });
@@ -310,7 +308,7 @@ public class UIController {
 
     private void refreshWeatherIfPossible() {
         String city = txt_field_city.getText();
-        if (city != null && !city.trim().isEmpty() && city.trim().length() >= 3) {
+        if (city != null && city.trim().length() >= 3) {
             loadCurrentWeather(city.trim());
             loadForecastOrHistory(city.trim());
         }

@@ -200,7 +200,11 @@ public class ClientHandler implements Runnable {
                         if (parts.length > 1) {
                             String city = parts[1].trim();
                             boolean success = weatherService.addFavorite(city, currentUser.getUsername());
-                            sendMessage(writer, success ? "OK: Favorite added" : "ERROR: Could not add favorite");
+                            if (success) {
+                                sendMessage(writer, "OK: Favorite added");
+                            } else {
+                                sendMessage(writer, "ERROR: Could not add favorite");
+                            }
                             sendMessage(writer, "###END###");
                         } else {
                             sendMessage(writer, "ERROR: Missing city name");
@@ -212,7 +216,11 @@ public class ClientHandler implements Runnable {
                         if (parts.length > 1) {
                             String city = parts[1].trim();
                             boolean removeSuccess = weatherService.removeFavorite(city, currentUser.getUsername());
-                            sendMessage(writer, removeSuccess ? "OK: Favorite removed" : "ERROR: Favorite not found");
+                            if (removeSuccess) {
+                                sendMessage(writer, "OK: Favorite removed");
+                            } else {
+                                sendMessage(writer, "ERROR: Favorite not found");
+                            }
                             sendMessage(writer, "###END###");
                         } else {
                             sendMessage(writer, "ERROR: Missing city name");
@@ -301,7 +309,11 @@ public class ClientHandler implements Runnable {
                     case "CHECK_ONLINE":
 
                         boolean isOnline = weatherService.isOnline();
-                        sendMessage(writer, isOnline ? "ONLINE" : "OFFLINE");
+                        if (isOnline) {
+                            sendMessage(writer, "ONLINE");
+                        } else {
+                            sendMessage(writer, "OFFLINE");
+                        }
                         sendMessage(writer, "###END###");
                         break;
 

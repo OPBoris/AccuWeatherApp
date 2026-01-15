@@ -19,7 +19,12 @@ public class CurrentWeatherService {
     public String getCurrentWeather(double lat, double lon, String unit,
                                     boolean showHumidity, boolean showWind, boolean showFeelsLike) {
         try {
-            String tempUnit = unit.equalsIgnoreCase("F") ? "fahrenheit" : "celsius";
+            String tempUnit;
+            if (unit.equalsIgnoreCase("F")) {
+                tempUnit = "fahrenheit";
+            } else {
+                tempUnit = "celsius";
+            }
             String url = String.format(CURRENT_WEATHER_URL, lat, lon, tempUnit);
             JsonNode data = apiClient.makeOpenMeteoCall(url);
             return processCurrentWeather(data, unit, showFeelsLike, showHumidity, showWind);

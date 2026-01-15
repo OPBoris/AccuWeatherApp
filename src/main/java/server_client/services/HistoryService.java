@@ -148,8 +148,12 @@ public class HistoryService {
                 writer.println("Date,Day,Temperature_Mean_" + unit + ",Temp_Min_" + unit +
                         ",Temp_Max_" + unit + ",Weather,Wind_km/h,Rain_mm,Precipitation_mm");
 
-                int daysCount = times != null ? times.size() : 0;
-
+                int daysCount;
+                if (times != null) {
+                    daysCount = times.size();
+                } else {
+                    daysCount = 0;
+                }
 
                 for (int i = 0; i < daysCount; i++) {
                     String dateStr = times.get(i).asText();
@@ -186,7 +190,6 @@ public class HistoryService {
 
         } catch (Exception e) {
             System.err.println("Error exporting historical data to CSV: " + e.getMessage());
-            e.printStackTrace();
             return "ERROR: Failed to export data: " + e.getMessage();
         }
     }
@@ -232,7 +235,12 @@ public class HistoryService {
         JsonNode windSpeed = daily.get("windspeed_10m_max");
         JsonNode weatherCode = daily.get("weathercode");
 
-        int daysCount = times != null ? times.size() : 0;
+        int daysCount;
+        if (times != null) {
+            daysCount = times.size();
+        } else {
+            daysCount = 0;
+        }
 
         for (int i = 0; i < daysCount; i++) {
             String dateStr = times.get(i).asText();
