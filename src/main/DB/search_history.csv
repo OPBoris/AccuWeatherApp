@@ -1,4 +1,7 @@
 timestamp,username,city
+2026-01-16 23:15:34,Jan,Bangkok
+2026-01-16 23:15:20,Jan,London
+2026-01-16 23:14:12,Jan,London
 2025-12-22 15:55:03,Jan,Vienna
 2025-12-22 15:55:13,Moritz,Berlin
 2025-12-22 15:55:42,Boris,Paris
@@ -800,3 +803,19 @@ timestamp,username,city
 2026-01-16 22:35:31,Boris,Paris
 2026-01-16 22:38:33,Moritz,Graz
 2026-01-16 22:38:36,Moritz,Graz
+2026-01-16 22:45:46,Jan,London
+2026-01-16 22:46:26,Jan,Rome
+2026-01-16 22:46:35,Moritz,Graz
+2026-01-16 22:46:38,Jan,London
+2026-01-16 22:49:19,Moritz,Graz
+2026-01-16 22:49:27,Moritz,Paris
+2026-01-16 22:49:40,Jan,London
+2026-01-16 22:49:46,Moritz,Graz
+2026-01-16 22:49:57,Boris,Paris
+2026-01-16 22:50:13,Boris,Berlin
+2026-01-16 22:50:33,Boris,New York
+2026-01-16 22:51:19,Jan,London
+2026-01-16 22:51:35,Jan,New York
+2026-01-16 22:53:01,Moritz,Graz
+2026-01-16 23:06:31,Moritz,Graz
+2026-01-16 23:06:50,Moritz,Bangkok

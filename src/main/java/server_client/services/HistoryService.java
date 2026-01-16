@@ -27,33 +27,37 @@ public class HistoryService {
 
     public synchronized void saveToHistory(String city, String username) {
         try {
-
             File dbFolder = new File(DB_FOLDER);
             boolean success = dbFolder.mkdirs();
             if (!success) {
                 System.err.println("ERROR: DB folder creation failed or already exists.");
             }
 
-
             File csvFile = new File(HISTORY_CSV);
             boolean isNewFile = !csvFile.exists();
-
-
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile, true))) {
-
-                if (isNewFile) {
-                    writer.write("timestamp,username,city");
-                    writer.newLine();
+            List<String> oldLines = new ArrayList<>();
+            if (!isNewFile) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(csvFile))) {
+                    reader.readLine();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        oldLines.add(line);
+                    }
                 }
-
-
+            }
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
+                writer.write("timestamp,username,city");
+                writer.newLine();
                 String timestamp = java.time.LocalDateTime.now().format(
                         java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                 );
                 writer.write(String.format("%s,%s,%s", timestamp, username, city.trim()));
                 writer.newLine();
+                for (String oldLine : oldLines) {
+                    writer.write(oldLine);
+                    writer.newLine();
+                }
             }
-
         } catch (IOException e) {
             System.err.println("Error while writing to CSV database: " + e.getMessage());
         }
@@ -315,4 +319,3 @@ public class HistoryService {
 
     }
 }
-
