@@ -26,8 +26,9 @@ public class FavoritesService {
             return true;
         }
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, true))) {
-            writer.println(cleanCity);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(favFile, true))) {
+            writer.write(cleanCity);
+            writer.newLine();
             return true;
         } catch (IOException e) {
             System.out.println("Error saving favorite: " + e.getMessage());
@@ -47,9 +48,10 @@ public class FavoritesService {
 
         currentFavs.remove(cleanCity);
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(favFile, false))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(favFile, false))) {
             for (String fav : currentFavs) {
-                writer.println(fav);
+                writer.write(fav);
+                writer.newLine();
             }
             return true;
         } catch (IOException e) {

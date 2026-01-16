@@ -37,17 +37,19 @@ public class HistoryService {
             boolean isNewFile = !csvFile.exists();
 
 
-            try (PrintWriter writer = new PrintWriter(new FileWriter(csvFile, true))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile, true))) {
 
                 if (isNewFile) {
-                    writer.println("timestamp,username,city");
+                    writer.write("timestamp,username,city");
+                    writer.newLine();
                 }
 
 
                 String timestamp = java.time.LocalDateTime.now().format(
                         java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                 );
-                writer.println(String.format("%s,%s,%s", timestamp, username, city.trim()));
+                writer.write(String.format("%s,%s,%s", timestamp, username, city.trim()));
+                writer.newLine();
             }
 
         } catch (IOException e) {
@@ -152,10 +154,11 @@ public class HistoryService {
             List<String> weatherCode = JsonParser.parseArrayValues(dailyBlock, "weathercode");
 
 
-            try (PrintWriter writer = new PrintWriter(new FileWriter(csvFile))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
 
-                writer.println("Date,Day,Temperature_Mean_" + unit + ",Temp_Min_" + unit +
+                writer.write("Date,Day,Temperature_Mean_" + unit + ",Temp_Min_" + unit +
                         ",Temp_Max_" + unit + ",Weather,Wind_km/h,Rain_mm,Precipitation_mm");
+                writer.newLine();
 
                 int daysCount = times.size();
 
@@ -184,9 +187,10 @@ public class HistoryService {
                     double windVal = Double.parseDouble(windSpeed.get(i));
 
 
-                    writer.println(String.format("%s,%d,%.1f,%.1f,%.1f,%s,%.1f,%.1f,%.1f",
+                    writer.write(String.format("%s,%d,%.1f,%.1f,%.1f,%s,%.1f,%.1f,%.1f",
                             dateStr, daysAgo, tempMeanVal, tempMinVal, tempMaxVal,
                             weatherDesc, windVal, rainVal, precipVal));
+                    writer.newLine();
                 }
             }
 

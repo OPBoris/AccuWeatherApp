@@ -75,15 +75,22 @@ public class OfflineWeatherService {
             );
             String today = java.time.LocalDate.now().toString();
 
-            try (PrintWriter writer = new PrintWriter(new FileWriter(cacheFile))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(cacheFile))) {
 
-                writer.println("# OFFLINE WEATHER CACHE");
-                writer.println("# Downloaded: " + downloadTime);
-                writer.println("# City: " + cityNameReal + ", " + country);
-                writer.println("# Unit: " + unit);
-                writer.println("# Date: " + today);
-                writer.println("#");
-                writer.println("[CURRENT]");
+                writer.write("# OFFLINE WEATHER CACHE");
+                writer.newLine();
+                writer.write("# Downloaded: " + downloadTime);
+                writer.newLine();
+                writer.write("# City: " + cityNameReal + ", " + country);
+                writer.newLine();
+                writer.write("# Unit: " + unit);
+                writer.newLine();
+                writer.write("# Date: " + today);
+                writer.newLine();
+                writer.write("#");
+                writer.newLine();
+                writer.write("[CURRENT]");
+                writer.newLine();
 
                 int currentStart = jsonData.indexOf("\"current\":");
                 int objectStart = jsonData.indexOf("{", currentStart);
@@ -98,15 +105,24 @@ public class OfflineWeatherService {
 
                 String weatherDesc = WeatherCodeDecoder.decode(weatherCode);
 
-                writer.println("city=" + cityNameReal);
-                writer.println("country=" + country);
-                writer.println("unit=" + unit);
-                writer.println("temp=" + String.format("%.1f", temp));
-                writer.println("feels_like=" + String.format("%.1f", feelsLike));
-                writer.println("humidity=" + humidity);
-                writer.println("wind=" + String.format("%.1f", windSpeed));
-                writer.println("weather=" + weatherDesc);
-                writer.println("weather_code=" + weatherCode);
+                writer.write("city=" + cityNameReal);
+                writer.newLine();
+                writer.write("country=" + country);
+                writer.newLine();
+                writer.write("unit=" + unit);
+                writer.newLine();
+                writer.write("temp=" + String.format("%.1f", temp));
+                writer.newLine();
+                writer.write("feels_like=" + String.format("%.1f", feelsLike));
+                writer.newLine();
+                writer.write("humidity=" + humidity);
+                writer.newLine();
+                writer.write("wind=" + String.format("%.1f", windSpeed));
+                writer.newLine();
+                writer.write("weather=" + weatherDesc);
+                writer.newLine();
+                writer.write("weather_code=" + weatherCode);
+                writer.newLine();
             }
 
             return "SUCCESS: Offline data saved!\nCity: " + cityNameReal + ", " + country +
@@ -201,8 +217,8 @@ public class OfflineWeatherService {
 
                 String today = java.time.LocalDate.now().toString();
                 if (!cachedDate.equals(today)) {
-                    return "ERROR: Offline data is outdated (from " + cachedDate + ").\n" +
-                            "Please download new data when internet is available.";
+                    throw new WeatherAppException("ERROR: Offline data is outdated (from " + cachedDate + ").\n" +
+                            "Please download new data when internet is available.");
                 }
 
 
