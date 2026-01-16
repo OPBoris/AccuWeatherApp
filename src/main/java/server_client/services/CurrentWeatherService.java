@@ -39,7 +39,7 @@ public class CurrentWeatherService {
     private String processCurrentWeather(String jsonData, String unit,
                                          boolean showFeelsLike, boolean showHumidity, boolean showWind) throws WeatherAppException {
         if (jsonData == null || !jsonData.contains("\"current\"")) {
-            throw new WeatherAppException("Wetterdaten sind unvollständig oder leer.");
+            throw new WeatherAppException("Weather data is incomplete or empty.");
         }
 
         StringBuilder sb = new StringBuilder();

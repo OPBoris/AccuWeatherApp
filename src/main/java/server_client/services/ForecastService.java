@@ -92,16 +92,16 @@ public class ForecastService {
                 dayForecast.append("Min: ").append(String.format("%.1f", tempMinVal)).append("°").append(unit).append("\n");
                 dayForecast.append("Weather: ").append(weatherDescription).append("\n");
                 dayForecast.append("Rain: ").append(rainProbability).append("%");
-                if (showWind) {
-                    dayForecast.append("\nWind: ").append(String.format("%.1f", windSpeedVal)).append(" km/h");
-                }
+
                 if (showFeelsLike && !Double.isNaN(feelsLikeVal)) {
                     dayForecast.append("\nFeels Like: ").append(String.format("%.1f", feelsLikeVal)).append("°").append(unit);
                 }
                 if (showHumidity && humidityVal >= 0) {
                     dayForecast.append("\nHumidity: ").append(humidityVal).append("%");
                 }
-
+                if (showWind) {
+                    dayForecast.append("\nWind: ").append(String.format("%.1f", windSpeedVal)).append(" km/h");
+                }
                 if (dayIndex > 0) {
                     result.append("|||");
                 }
