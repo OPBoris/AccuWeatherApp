@@ -4,6 +4,7 @@ import server_client.ApiClient;
 import server_client.ApiUrls;
 import server_client.JsonParser;
 import server_client.WeatherCodeDecoder;
+import server_client.exceptions.WeatherAppException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ public class HistoryService {
     }
 
 
-    public String getRecentCities(String username) {
+    public String getRecentCities(String username) throws WeatherAppException {
         File csvFile = new File(HISTORY_CSV);
         if (!csvFile.exists()) {
             return "";
@@ -81,14 +82,13 @@ public class HistoryService {
                     .orElse("");
 
         } catch (IOException e) {
-            System.err.println("Error while reading CSV database: " + e.getMessage());
-            return "ERROR: History unavailable.";
+            throw new WeatherAppException("Could not load search history.", e);
         }
     }
 
 
     public String exportHistoricalDataToCSV(String cityName, double lat, double lon,
-                                            String unit, String username) {
+                                            String unit, String username) throws WeatherAppException {
         try {
 
             java.time.LocalDate today = java.time.LocalDate.now();
@@ -105,14 +105,16 @@ public class HistoryService {
 
             return exportHistoricalDataToCSVInternal(cityName, unit, username, weatherData);
 
+        } catch (WeatherAppException e) {
+            throw e;
         } catch (Exception e) {
-            return "ERROR: " + e.getMessage();
+            throw new WeatherAppException("Export failed: " + e.getMessage(), e);
         }
     }
 
 
     private String exportHistoricalDataToCSVInternal(String cityName, String unit,
-                                                     String username, String jsonData) {
+                                                     String username, String jsonData) throws WeatherAppException {
         try {
 
             File dbFolder = new File(DB_FOLDER);
@@ -132,7 +134,7 @@ public class HistoryService {
             File csvFile = new File(DB_FOLDER, filename);
 
             if (jsonData == null || !jsonData.contains("\"daily\"")) {
-                return "ERROR: Unable to fetch historical data from Open-Meteo.";
+                throw new WeatherAppException("Unable to fetch historical data.");
             }
 
             int dailyStart = jsonData.indexOf("\"daily\":");
@@ -190,14 +192,15 @@ public class HistoryService {
 
             return "SUCCESS: Historical data exported to: " + csvFile.getAbsolutePath();
 
+        } catch (IOException e) {
+            throw new WeatherAppException("File error during export.", e);
         } catch (Exception e) {
-            System.err.println("Error exporting historical data to CSV: " + e.getMessage());
-            return "ERROR: Failed to export data: " + e.getMessage();
+            throw new WeatherAppException("Error processing historical data.", e);
         }
     }
 
 
-    public String getHistoricalWeather(double lat, double lon, String unit) {
+    public String getHistoricalWeather(double lat, double lon, String unit) throws  WeatherAppException {
         try {
 
             java.time.LocalDate today = java.time.LocalDate.now();
@@ -219,8 +222,10 @@ public class HistoryService {
 
             return processHistoricalData(dailyBlock, unit);
 
+        } catch (WeatherAppException e) {
+            throw e;
         } catch (Exception e) {
-            return "ERROR: " + e.getMessage();
+            throw new WeatherAppException("Error loading historical weather data.", e);
         }
     }
 
@@ -230,61 +235,72 @@ public class HistoryService {
     }
 
 
-    public String processHistoricalData(String dailyBlock, String unit) {
-        StringBuilder result = new StringBuilder();
+    public String processHistoricalData(String dailyBlock, String unit) throws WeatherAppException {
+        try {
+            StringBuilder result = new StringBuilder();
 
-        List<String> times = JsonParser.parseArrayValues(dailyBlock, "time");
-        List<String> tempMax = JsonParser.parseArrayValues(dailyBlock, "temperature_2m_max");
-        List<String> tempMin = JsonParser.parseArrayValues(dailyBlock, "temperature_2m_min");
-        List<String> tempMean = JsonParser.parseArrayValues(dailyBlock, "temperature_2m_mean");
-        List<String> precipitation = JsonParser.parseArrayValues(dailyBlock, "precipitation_sum");
-        List<String> rain = JsonParser.parseArrayValues(dailyBlock, "rain_sum");
-        List<String> windSpeed = JsonParser.parseArrayValues(dailyBlock, "windspeed_10m_max");
-        List<String> weatherCode = JsonParser.parseArrayValues(dailyBlock, "weathercode");
+            List<String> times = JsonParser.parseArrayValues(dailyBlock, "time");
+            List<String> tempMax = JsonParser.parseArrayValues(dailyBlock, "temperature_2m_max");
+            List<String> tempMin = JsonParser.parseArrayValues(dailyBlock, "temperature_2m_min");
+            List<String> tempMean = JsonParser.parseArrayValues(dailyBlock, "temperature_2m_mean");
+            List<String> precipitation = JsonParser.parseArrayValues(dailyBlock, "precipitation_sum");
+            List<String> rain = JsonParser.parseArrayValues(dailyBlock, "rain_sum");
+            List<String> windSpeed = JsonParser.parseArrayValues(dailyBlock, "windspeed_10m_max");
+            List<String> weatherCode = JsonParser.parseArrayValues(dailyBlock, "weathercode");
 
-        int daysCount = times.size();
+            int daysCount = times.size();
 
-        for (int i = 0; i < daysCount; i++) {
-            String dateStr = times.get(i).replace("\"", "");
+            for (int i = 0; i < daysCount; i++) {
+                String dateStr = times.get(i).replace("\"", "");
 
 
-            double tempMeanVal = Double.parseDouble(tempMean.get(i));
-            double tempMaxVal = Double.parseDouble(tempMax.get(i));
-            double tempMinVal = Double.parseDouble(tempMin.get(i));
+                double tempMeanVal = Double.parseDouble(tempMean.get(i));
+                double tempMaxVal = Double.parseDouble(tempMax.get(i));
+                double tempMinVal = Double.parseDouble(tempMin.get(i));
 
-            if (unit.equalsIgnoreCase("F")) {
-                tempMeanVal = celsiusToFahrenheit(tempMeanVal);
-                tempMaxVal = celsiusToFahrenheit(tempMaxVal);
-                tempMinVal = celsiusToFahrenheit(tempMinVal);
+                if (unit.equalsIgnoreCase("F")) {
+                    tempMeanVal = celsiusToFahrenheit(tempMeanVal);
+                    tempMaxVal = celsiusToFahrenheit(tempMaxVal);
+                    tempMinVal = celsiusToFahrenheit(tempMinVal);
+                }
+
+
+                double precipVal = Double.parseDouble(precipitation.get(i));
+                double rainVal = Double.parseDouble(rain.get(i));
+                double windVal = Double.parseDouble(windSpeed.get(i));
+                int wmoCode = Integer.parseInt(weatherCode.get(i));
+                String weatherDesc = WeatherCodeDecoder.decode(wmoCode);
+
+
+                int daysAgo = daysCount - i;
+
+                String daysAgoSuffix;
+                if (daysAgo > 1) {
+                    daysAgoSuffix = "s";
+                } else {
+                    daysAgoSuffix = "";
+                }
+
+                String dayData = dateStr + "\n" +
+                        "(" + daysAgo + " day" + daysAgoSuffix + " ago)\n\n" +
+                        "Temp: " + String.format("%.1f", tempMeanVal) + "°" + unit + "\n" +
+                        "Range: " + String.format("%.1f - %.1f", tempMinVal, tempMaxVal) + "°" + unit + "\n" +
+                        "Weather: " + weatherDesc + "\n" +
+                        "Wind: " + String.format("%.1f", windVal) + " km/h\n" +
+                        "Rain: " + String.format("%.1f", rainVal) + " mm\n" +
+                        "Precipitation: " + String.format("%.1f", precipVal) + " mm";
+
+                if (i > 0) {
+                    result.append("|||");
+                }
+                result.append(dayData);
             }
 
-
-            double precipVal = Double.parseDouble(precipitation.get(i));
-            double rainVal = Double.parseDouble(rain.get(i));
-            double windVal = Double.parseDouble(windSpeed.get(i));
-            int wmoCode = Integer.parseInt(weatherCode.get(i));
-            String weatherDesc = WeatherCodeDecoder.decode(wmoCode);
-
-
-            int daysAgo = daysCount - i;
-
-
-            String dayData = dateStr + "\n" +
-                    "(" + daysAgo + " day" + (daysAgo > 1 ? "s" : "") + " ago)\n\n" +
-                    "Temp: " + String.format("%.1f", tempMeanVal) + "°" + unit + "\n" +
-                    "Range: " + String.format("%.1f - %.1f", tempMinVal, tempMaxVal) + "°" + unit + "\n" +
-                    "Weather: " + weatherDesc + "\n" +
-                    "Wind: " + String.format("%.1f", windVal) + " km/h\n" +
-                    "Rain: " + String.format("%.1f", rainVal) + " mm\n" +
-                    "Precipitation: " + String.format("%.1f", precipVal) + " mm";
-
-            if (i > 0) {
-                result.append("|||");
-            }
-            result.append(dayData);
+            return result.toString();
+        } catch (Exception e) {
+            throw new WeatherAppException("Error parsing historical data.", e);
         }
 
-        return result.toString();
     }
 }
 

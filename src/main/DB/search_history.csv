@@ -119,14 +119,7 @@ timestamp,username,city
 2026-01-06 14:30:55,Moritz,Unterwaltersdorf
 2026-01-06 14:30:59,Jan,Vienna
 2026-01-06 14:45:44,Moritz,Berlin
-2026-01-06 14:45:52,Moritz,St. Pölten
-2026-01-06 14:45:58,Moritz,St. Pölten
 2026-01-07 14:13:09,Guest_1767791588390,Berlin
-2026-01-07 14:16:50,Moritz,St. Pölten
-2026-01-07 14:16:59,Moritz,St. Pölten
-2026-01-07 14:17:03,Moritz,St. Pölten
-2026-01-07 14:17:09,Moritz,St. Pölten
-2026-01-07 14:17:12,Moritz,St. Pölten
 2026-01-07 14:17:16,Moritz,Berlin
 2026-01-07 14:17:21,Moritz,Unterwaltersdorf
 2026-01-07 14:17:23,Moritz,Unterwaltersdorf
@@ -664,3 +657,41 @@ timestamp,username,city
 2026-01-15 16:10:29,Moritz,Unterwaltersdorf
 2026-01-15 16:10:31,Moritz,London
 2026-01-15 16:10:35,Moritz,London
+2026-01-16 16:18:05,Moritz,London
+2026-01-16 16:18:12,Moritz,Graz
+2026-01-16 16:18:13,Moritz,Unterwaltersdorf
+2026-01-16 16:18:14,Moritz,Unterwaltersdorf
+2026-01-16 16:18:16,Moritz,Unterwaltersdorf
+2026-01-16 16:18:25,Moritz,Berlin
+2026-01-16 16:18:28,Moritz,Graz
+2026-01-16 16:18:29,Moritz,Graz
+2026-01-16 16:18:30,Moritz,Unterwaltersdorf
+2026-01-16 16:18:30,Moritz,Berlin
+2026-01-16 16:18:33,Moritz,Unterwaltersdorf
+2026-01-16 16:18:34,Moritz,Graz
+2026-01-16 16:18:38,Moritz,Unterwaltersdorf
+2026-01-16 16:18:39,Jan,London
+2026-01-16 16:18:41,Moritz,Graz
+2026-01-16 16:18:42,Boris,Paris
+2026-01-16 16:18:44,Moritz,Graz
+2026-01-16 16:18:45,Moritz,New York
+2026-01-16 16:19:07,Moritz,New York
+2026-01-16 16:19:14,Moritz,New York
+2026-01-16 16:19:40,Moritz,Unterwaltersdorf
+2026-01-16 16:19:40,Moritz,Graz
+2026-01-16 16:19:41,Moritz,Unterwaltersdorf
+2026-01-16 16:19:41,Moritz,Unterwaltersdorf
+2026-01-16 16:19:42,Moritz,Berlin
+2026-01-16 16:19:43,Moritz,Berlin
+2026-01-16 16:19:45,Moritz,Graz
+2026-01-16 16:19:49,Moritz,Washington
+2026-01-16 16:20:02,Jan,London
+2026-01-16 16:20:11,Moritz,Graz
+2026-01-16 16:20:21,Moritz,Graz
+2026-01-16 16:20:23,Boris,Paris
+2026-01-16 16:21:08,Moritz,Graz
+2026-01-16 16:21:11,Moritz,Warschauer Straße
+2026-01-16 16:51:04,Moritz,Graz
+2026-01-16 16:51:15,Moritz,Unterwaltersdorf
+2026-01-16 16:51:19,Moritz,Unterwaltersdorf
+2026-01-16 16:51:21,Moritz,Berlin

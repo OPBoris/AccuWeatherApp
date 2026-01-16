@@ -4,6 +4,7 @@ import server_client.ApiClient;
 import server_client.ApiUrls;
 import server_client.JsonParser;
 import server_client.WeatherCodeDecoder;
+import server_client.exceptions.WeatherAppException;
 
 
 public class CurrentWeatherService {
@@ -16,7 +17,7 @@ public class CurrentWeatherService {
 
 
     public String getCurrentWeather(double lat, double lon, String unit,
-                                    boolean showHumidity, boolean showWind, boolean showFeelsLike) {
+                                    boolean showHumidity, boolean showWind, boolean showFeelsLike) throws WeatherAppException {
         try {
             String tempUnit;
             if (unit.equalsIgnoreCase("F")) {
@@ -27,16 +28,18 @@ public class CurrentWeatherService {
             String url = String.format(ApiUrls.CURRENT_WEATHER, lat, lon, tempUnit);
             String data = apiClient.makeOpenMeteoCall(url);
             return processCurrentWeather(data, unit, showFeelsLike, showHumidity, showWind);
+        } catch (WeatherAppException e) {
+            throw e;
         } catch (Exception e) {
-            return "ERROR: " + e.getMessage();
+            throw new WeatherAppException("Error retrieving current weather.", e);
         }
     }
 
 
     private String processCurrentWeather(String jsonData, String unit,
-                                         boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+                                         boolean showFeelsLike, boolean showHumidity, boolean showWind) throws WeatherAppException {
         if (jsonData == null || !jsonData.contains("\"current\"")) {
-            return "ERROR: Unable to fetch weather data.";
+            throw new WeatherAppException("Wetterdaten sind unvollständig oder leer.");
         }
 
         StringBuilder sb = new StringBuilder();
@@ -77,7 +80,7 @@ public class CurrentWeatherService {
 
             return sb.toString();
         } catch (Exception e) {
-            return "ERROR: Unable to parse weather data.";
+            throw new WeatherAppException("Error processing weather data.", e);
         }
     }
 }

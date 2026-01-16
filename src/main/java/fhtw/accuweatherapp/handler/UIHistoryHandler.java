@@ -46,7 +46,6 @@ public class UIHistoryHandler {
         });
 
         task.setOnFailed(event -> {
-            System.err.println("Error while loading history: " + task.getException().getMessage());
             comboBox.setItems(javafx.collections.FXCollections.observableArrayList());
             comboBox.getSelectionModel().clearSelection();
             comboBox.setValue(null);

@@ -62,7 +62,16 @@ public class UIUserHandler {
             }
         });
 
-        task.setOnFailed(e -> onError.call("Error user switching."));
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            String errorMsg;
+            if (ex != null) {
+                errorMsg = "Error switching user: " + ex.getMessage();
+            } else {
+                errorMsg = "Error switching user: Unknown error";
+            }
+            onError.call(errorMsg);
+        });
 
         new Thread(task, "switch-user").start();
     }

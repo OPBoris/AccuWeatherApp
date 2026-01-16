@@ -4,6 +4,7 @@ import server_client.ApiClient;
 import server_client.ApiUrls;
 import server_client.JsonParser;
 import server_client.WeatherCodeDecoder;
+import server_client.exceptions.WeatherAppException;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ForecastService {
 
 
     public String getForecast(double lat, double lon, String unit,
-                              boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+                              boolean showFeelsLike, boolean showHumidity, boolean showWind) throws WeatherAppException {
         try {
             String tempUnit;
             if (unit.equalsIgnoreCase("F")) {
@@ -29,24 +30,25 @@ public class ForecastService {
             String url = String.format(ApiUrls.FORECAST, lat, lon, tempUnit);
             String data = apiClient.makeOpenMeteoCall(url);
             return processForecast(data, unit, showFeelsLike, showHumidity, showWind);
+        } catch (WeatherAppException e) {
+            throw e;
         } catch (Exception e) {
-            System.err.println("Error fetching weather data: " + e.getMessage());
-            return "ERROR: Can't fetch weather data. Error: " + e.getMessage();
+            throw new WeatherAppException("Error fetching forecast data.", e);
         }
     }
 
     private String processForecast(String jsonData, String unit,
-                                   boolean showFeelsLike, boolean showHumidity, boolean showWind) {
+                                   boolean showFeelsLike, boolean showHumidity, boolean showWind) throws WeatherAppException {
         try {
             if (jsonData == null || !jsonData.contains("\"daily\"")) {
-                return "ERROR: Unable to fetch forecast data.";
+                throw new WeatherAppException("Forecast data is incomplete.");
             }
 
             StringBuilder result = new StringBuilder();
 
             int dailyStart = jsonData.indexOf("\"daily\":");
             if (dailyStart == -1) {
-                return "ERROR: Unable to fetch forecast data.";
+                throw new WeatherAppException("ERROR: Unable to fetch forecast data.");
             }
 
             int objectStart = jsonData.indexOf("{", dailyStart);
@@ -73,12 +75,12 @@ public class ForecastService {
                 double windSpeedVal = Double.parseDouble(windSpeed.get(dayIndex));
 
                 double feelsLikeVal = Double.NaN;
-                if (feelsLike != null && dayIndex < feelsLike.size() && !feelsLike.get(dayIndex).equals("null")) {
+                if (dayIndex < feelsLike.size() && !feelsLike.get(dayIndex).equals("null")) {
                     feelsLikeVal = Double.parseDouble(feelsLike.get(dayIndex));
                 }
 
                 int humidityVal = -1;
-                if (humidity != null && dayIndex < humidity.size() && !humidity.get(dayIndex).equals("null")) {
+                if (dayIndex < humidity.size() && !humidity.get(dayIndex).equals("null")) {
                     humidityVal = Integer.parseInt(humidity.get(dayIndex));
                 }
 
@@ -108,8 +110,7 @@ public class ForecastService {
 
             return result.toString();
         } catch (Exception e) {
-            System.err.println("Error processing forecast: " + e.getMessage());
-            return "ERROR: " + e.getMessage();
+            throw new WeatherAppException("Error processing forecast.", e);
         }
     }
 }

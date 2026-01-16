@@ -1,6 +1,9 @@
 package server_client;
 
+import server_client.exceptions.WeatherAppException;
+
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -11,11 +14,12 @@ public class ApiClient {
     public ApiClient() {
     }
 
-    public String makeOpenMeteoCall(String urlString) throws Exception {
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    public String makeOpenMeteoCall(String urlString) throws WeatherAppException {
+        HttpURLConnection connection = null;
 
         try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
@@ -36,12 +40,20 @@ public class ApiClient {
                 return response.toString();
 
             } else {
-                System.err.println("Open-Meteo API Error: HTTP " + responseCode);
-                return null;
+                throw new WeatherAppException("Open-Meteo API Error: HTTP " + responseCode);
             }
 
-        } finally {
-            connection.disconnect();
+        } catch (java.net.SocketTimeoutException e) {
+            throw new WeatherAppException("Connection timeout to weather API.", e);
+        } catch (IOException e) {
+            throw new WeatherAppException("Network error while retrieving data.", e);
+        } catch (Exception e) {
+            throw new WeatherAppException("Unknown error in API client.", e);
+        }
+        finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
     }
 }

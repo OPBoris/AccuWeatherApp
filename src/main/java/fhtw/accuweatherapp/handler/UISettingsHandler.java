@@ -164,6 +164,19 @@ public class UISettingsHandler {
             }
         });
 
+        task.setOnFailed(e -> {
+            if (onResponse != null) {
+                Throwable ex = task.getException();
+                String errorMsg;
+                if (ex != null) {
+                    errorMsg = "Error: " + ex.getMessage();
+                } else {
+                    errorMsg = "Unknown error";
+                }
+                onResponse.call(errorMsg);
+            }
+        });
+
         new Thread(task, "settings-cmd").start();
     }
 
@@ -176,6 +189,12 @@ public class UISettingsHandler {
         };
 
         task.setOnSucceeded(e -> {
+            if (onComplete != null) {
+                onComplete.run();
+            }
+        });
+
+        task.setOnFailed(e -> {
             if (onComplete != null) {
                 onComplete.run();
             }

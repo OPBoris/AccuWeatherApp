@@ -1,2 +1,2 @@
 showHumidity,showWind,showFeelsLike,unit,standardCity
-false,false,false,F,london
+true,false,true,C,Graz

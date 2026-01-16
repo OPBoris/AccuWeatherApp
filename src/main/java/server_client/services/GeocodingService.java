@@ -3,6 +3,7 @@ package server_client.services;
 import server_client.ApiClient;
 import server_client.ApiUrls;
 import server_client.JsonParser;
+import server_client.exceptions.WeatherAppException;
 
 import java.net.URLEncoder;
 
@@ -16,33 +17,39 @@ public class GeocodingService {
     }
 
 
-    public String getCoordinates(String city) throws Exception {
+    public String getCoordinates(String city) throws WeatherAppException {
 
         if (city == null || city.trim().length() < 3) {
-            throw new IllegalArgumentException("City name must have at least 3 characters");
+            throw new WeatherAppException("City name must have at least 3 characters");
         }
 
 
         if (!city.trim().matches("[a-zA-ZäöüÄÖÜß\\s\\-,]+")) {
-            throw new IllegalArgumentException("City name can only contain letters, spaces, hyphens, and commas");
+            throw new WeatherAppException("City name can only contain letters, spaces, hyphens, and commas");
         }
 
-
-        String encodedCity = URLEncoder.encode(city.trim());
-
-
-        String urlString = String.format(ApiUrls.GEOCODING, encodedCity);
-        String response = apiClient.makeOpenMeteoCall(urlString);
+        try {
+            String encodedCity = URLEncoder.encode(city.trim());
 
 
-        if (response != null && response.contains("\"results\"")) {
+            String urlString = String.format(ApiUrls.GEOCODING, encodedCity);
+            String response = apiClient.makeOpenMeteoCall(urlString);
+
+
+            if (response == null || !response.contains("\"results\"")) {
+                throw new WeatherAppException("City '" + city + "' has not been found.");
+            }
+
             return parseGeocodingResponse(response);
-        }
 
-        return null;
+        } catch (WeatherAppException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new WeatherAppException("Error while searching the coordinates: " + e.getMessage());
+        }
     }
 
-    private String parseGeocodingResponse(String json) {
+    private String parseGeocodingResponse(String json) throws WeatherAppException {
         try {
             int resultsStart = json.indexOf("\"results\":");
             if (resultsStart == -1) return null;
@@ -63,14 +70,28 @@ public class GeocodingService {
             String name = JsonParser.extractValue(firstResult, "name");
             String country = JsonParser.extractValue(firstResult, "country");
 
-            if (lat != null && lon != null) {
-                return lat + "|" + lon + "|" + (name != null ? name : "") + "|" + (country != null ? country : "");
+            if (lat == null || lon == null) {
+                throw new WeatherAppException("Invalid data received from the geocoding service.");
             }
 
-            return null;
+            String nameResult;
+            if (name != null) {
+                nameResult = name;
+            } else {
+                nameResult = "";
+            }
+
+            String countryResult;
+            if (country != null) {
+                countryResult = country;
+            } else {
+                countryResult = "";
+            }
+
+            return lat + "|" + lon + "|" + nameResult + "|" + countryResult;
+
         } catch (Exception e) {
-            System.err.println("Error parsing geocoding response: " + e.getMessage());
-            return null;
+            throw new WeatherAppException("Fehler beim Lesen der Geodaten.", e);
         }
     }
 }

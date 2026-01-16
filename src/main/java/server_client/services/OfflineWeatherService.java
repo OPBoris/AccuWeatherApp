@@ -4,6 +4,7 @@ import server_client.ApiClient;
 import server_client.ApiUrls;
 import server_client.JsonParser;
 import server_client.WeatherCodeDecoder;
+import server_client.exceptions.WeatherAppException;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -21,7 +22,7 @@ public class OfflineWeatherService {
 
 
     public String saveOfflineData(String cityNameReal, String country, double lat, double lon,
-                                  String unit, String username) {
+                                  String unit, String username) throws WeatherAppException {
         try {
 
             String tempUnit;
@@ -39,20 +40,21 @@ public class OfflineWeatherService {
 
             return saveOfflineDataInternal(cityNameReal, country, currentData, unit, username);
 
+        } catch (WeatherAppException e) {
+            throw e;
         } catch (Exception e) {
-            return "ERROR: " + e.getMessage();
+            throw new WeatherAppException("Error saving offline data.", e);
         }
     }
 
 
     private String saveOfflineDataInternal(String cityNameReal, String country, String jsonData,
-                                           String unit, String username) {
+                                           String unit, String username) throws WeatherAppException {
         try {
 
             File dbFolder = new File(DB_FOLDER);
-            boolean success = dbFolder.mkdirs();
-            if (!success) {
-                System.err.println("ERROR: DB folder creation failed or already exists.");
+            if (!dbFolder.exists() && !dbFolder.mkdirs()) {
+                throw new WeatherAppException("Could not create database folder.");
             }
 
 
@@ -64,7 +66,7 @@ public class OfflineWeatherService {
             deleteOldOfflineCache(cacheFile);
 
             if (jsonData == null) {
-                return "ERROR: Unable to fetch weather data for offline cache.";
+                throw new WeatherAppException("ERROR: Unable to fetch weather data for offline cache.");
             }
 
 
@@ -81,8 +83,6 @@ public class OfflineWeatherService {
                 writer.println("# Unit: " + unit);
                 writer.println("# Date: " + today);
                 writer.println("#");
-
-
                 writer.println("[CURRENT]");
 
                 int currentStart = jsonData.indexOf("\"current\":");
@@ -114,46 +114,40 @@ public class OfflineWeatherService {
                     "\nFile: " + cacheFile.getName();
 
         } catch (Exception e) {
-            System.err.println("Error saving offline data: " + e.getMessage());
-            return "ERROR: Failed to save offline data: " + e.getMessage();
+            throw new WeatherAppException("File error while saving.", e);
         }
     }
 
 
-    private void deleteOldOfflineCache(File cacheFile) {
+    private void deleteOldOfflineCache(File cacheFile) throws WeatherAppException {
         if (!cacheFile.exists()) {
             return;
         }
 
+        String cachedDate = null;
+
         try (BufferedReader reader = new BufferedReader(new FileReader(cacheFile))) {
             String line;
-            String cachedDate = null;
-
-
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("# Date: ")) {
                     cachedDate = line.substring(8).trim();
                     break;
                 }
             }
-
-
-            String today = java.time.LocalDate.now().toString();
-            if (cachedDate != null && !cachedDate.equals(today)) {
-                reader.close();
-                boolean success = cacheFile.delete();
-                if (!success) {
-                    System.err.println("ERROR: Cache can't be deleted.");
-                }
-                System.out.println("Deleted old offline cache from: " + cachedDate);
-            }
-
         } catch (IOException e) {
-            System.err.println("Error checking offline cache: " + e.getMessage());
+            throw new WeatherAppException("Error reading offline cache: " + e.getMessage(), e);
+        }
+
+        String today = java.time.LocalDate.now().toString();
+        if (cachedDate != null && !cachedDate.equals(today)) {
+            if (!cacheFile.delete()) {
+                throw new WeatherAppException("Could not delete old cache file.");
+            }
+            System.out.println("Deleted old offline cache from: " + cachedDate);
         }
     }
 
-    public String loadOfflineData(String username) {
+    public String loadOfflineData(String username) throws WeatherAppException {
         try {
 
             String sanitizedUser = username.replaceAll("[^a-zA-Z0-9]", "_");
@@ -162,7 +156,7 @@ public class OfflineWeatherService {
 
 
             if (!cacheFile.exists()) {
-                return "ERROR: No offline data available. Please download data first with internet connection.";
+                throw new WeatherAppException("ERROR: No offline data available. Please download data first with internet connection.");
             }
 
 
@@ -173,8 +167,6 @@ public class OfflineWeatherService {
                 String city = "";
                 String country = "";
                 String unit = "C";
-
-
                 String temp = "";
                 String feelsLike = "";
                 String humidity = "";
@@ -233,9 +225,10 @@ public class OfflineWeatherService {
                 return result.toString();
             }
 
+        } catch (WeatherAppException e) {
+            throw e;
         } catch (Exception e) {
-            System.err.println("Error loading offline data: " + e.getMessage());
-            return "ERROR: Failed to load offline data: " + e.getMessage();
+            throw new WeatherAppException("Error loading offline data.", e);
         }
     }
 

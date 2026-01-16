@@ -1,5 +1,6 @@
 package server_client;
 
+import server_client.exceptions.WeatherAppException;
 import server_client.services.SettingsService;
 import server_client.services.WeatherService;
 import user.GuestUser;
@@ -95,10 +96,13 @@ public class ClientHandler implements Runnable {
                     case "GET_WEATHER":
                         if (parts.length > 1) {
                             String city = parseAndSetFlags(parts[1].trim());
-
-                            String response = weatherService.getWeatherByCity(city, currentUnit,
-                                    currentUser.getUsername(), showHumidity, showWind, showFeelsLike);
-                            sendMessage(writer, response);
+                            try {
+                                String response = weatherService.getWeatherByCity(city, currentUnit,
+                                        currentUser.getUsername(), showHumidity, showWind, showFeelsLike);
+                                sendMessage(writer, response);
+                            } catch (WeatherAppException e) {
+                                sendMessage(writer, "ERROR: " + e.getMessage());
+                            }
                             sendMessage(writer, "###END###");
                         } else {
                             sendMessage(writer, "ERROR: Missing city name");
@@ -109,10 +113,13 @@ public class ClientHandler implements Runnable {
                     case "GET_FORECAST":
                         if (parts.length > 1) {
                             String city = parseAndSetFlags(parts[1].trim());
-
-                            String forecastResponse = weatherService.getForecastByCity(city, currentUnit,
-                                    showFeelsLike, showHumidity, showWind);
-                            sendMessage(writer, forecastResponse);
+                            try {
+                                String forecastResponse = weatherService.getForecastByCity(city, currentUnit,
+                                        showFeelsLike, showHumidity, showWind);
+                                sendMessage(writer, forecastResponse);
+                            } catch (WeatherAppException e) {
+                                sendMessage(writer, "ERROR: " + e.getMessage());
+                            }
                             sendMessage(writer, "###END###");
                         } else {
                             sendMessage(writer, "ERROR: Missing city name");
@@ -123,9 +130,12 @@ public class ClientHandler implements Runnable {
                     case "GET_HISTORICAL":
                         if (parts.length > 1) {
                             String city = parseAndSetFlags(parts[1].trim());
-
-                            String historicalResponse = weatherService.getHistoricalWeatherByCity(city, currentUnit);
-                            sendMessage(writer, historicalResponse);
+                            try {
+                                String historicalResponse = weatherService.getHistoricalWeatherByCity(city, currentUnit);
+                                sendMessage(writer, historicalResponse);
+                            } catch (WeatherAppException e) {
+                                sendMessage(writer, "ERROR: " + e.getMessage());
+                            }
                             sendMessage(writer, "###END###");
                         } else {
                             sendMessage(writer, "ERROR: Missing city name");
@@ -184,19 +194,26 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "GET_HISTORY":
-                        String history = weatherService.getRecentCities(currentUser.getUsername());
-                        sendMessage(writer, "HISTORY:" + history);
+                        try {
+                            String history = weatherService.getRecentCities(currentUser.getUsername());
+                            sendMessage(writer, "HISTORY:" + history);
+                        } catch (WeatherAppException e) {
+                            sendMessage(writer, "ERROR: " + e.getMessage());
+                        }
                         sendMessage(writer, "###END###");
                         break;
 
                     case "EXPORT_HISTORY":
                         if (parts.length > 1) {
                             String city = parseAndSetFlags(parts[1].trim());
-
-                            String exportResult = weatherService.exportHistoricalDataToCSVByCity(
-                                    city, currentUnit, currentUser.getUsername()
-                            );
-                            sendMessage(writer, exportResult);
+                            try {
+                                String exportResult = weatherService.exportHistoricalDataToCSVByCity(
+                                        city, currentUnit, currentUser.getUsername()
+                                );
+                                sendMessage(writer, exportResult);
+                            } catch (WeatherAppException e) {
+                                sendMessage(writer, "ERROR: " + e.getMessage());
+                            }
                             sendMessage(writer, "###END###");
                         } else {
                             sendMessage(writer, "ERROR: Missing city name for export");
@@ -208,11 +225,14 @@ public class ClientHandler implements Runnable {
 
                         if (parts.length > 1) {
                             String city = parseAndSetFlags(parts[1].trim());
-
-                            String saveResult = weatherService.saveOfflineData(
-                                    city, currentUnit, currentUser.getUsername()
-                            );
-                            sendMessage(writer, saveResult);
+                            try {
+                                String saveResult = weatherService.saveOfflineData(
+                                        city, currentUnit, currentUser.getUsername()
+                                );
+                                sendMessage(writer, saveResult);
+                            } catch (WeatherAppException e) {
+                                sendMessage(writer, "ERROR: " + e.getMessage());
+                            }
                             sendMessage(writer, "###END###");
                         } else {
                             sendMessage(writer, "ERROR: Missing city name for offline save");
@@ -221,9 +241,12 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case "LOAD_OFFLINE":
-
-                        String offlineData = weatherService.loadOfflineData(currentUser.getUsername());
-                        sendMessage(writer, offlineData);
+                        try {
+                            String offlineData = weatherService.loadOfflineData(currentUser.getUsername());
+                            sendMessage(writer, offlineData);
+                        } catch (WeatherAppException e) {
+                            sendMessage(writer, "ERROR: " + e.getMessage());
+                        }
                         sendMessage(writer, "###END###");
                         break;
 

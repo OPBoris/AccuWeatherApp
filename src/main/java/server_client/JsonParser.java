@@ -48,12 +48,20 @@ public class JsonParser {
 
     public static double parseDoubleValue(String json, String key) {
         String value = extractValue(json, key);
-        return value != null ? Double.parseDouble(value) : 0.0;
+        if (value != null) {
+            return Double.parseDouble(value);
+        } else {
+            return 0.0;
+        }
     }
 
     public static int parseIntValue(String json, String key) {
         String value = extractValue(json, key);
-        return value != null ? Integer.parseInt(value) : 0;
+        if (value != null) {
+            return Integer.parseInt(value);
+        } else {
+            return 0;
+        }
     }
 
     public static List<String> parseArrayValues(String json, String key) {

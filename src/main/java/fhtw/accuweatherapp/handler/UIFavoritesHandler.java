@@ -92,6 +92,13 @@ public class UIFavoritesHandler {
             }
         });
 
+        task.setOnFailed(e -> {
+            isCurrentCityFavorite = false;
+            if (onComplete != null) {
+                onComplete.run();
+            }
+        });
+
         new Thread(task, "check-favorite").start();
     }
 
@@ -118,6 +125,8 @@ public class UIFavoritesHandler {
             listView.getItems().addAll(task.getValue());
         });
 
+        task.setOnFailed(e -> listView.getItems().clear());
+
         new Thread(task, "load-favorites").start();
     }
 
@@ -129,7 +138,12 @@ public class UIFavoritesHandler {
             btnFavorite.setStyle("-fx-text-fill: gold; -fx-font-weight: bold;");
             btnFavorite.setText("★");
         } else {
-            String color = isDarkMode ? "white" : "black";
+            String color;
+            if (isDarkMode) {
+                color = "white";
+            } else {
+                color = "black";
+            }
             btnFavorite.setStyle("-fx-text-fill: " + color + ";");
             btnFavorite.setText("☆");
         }
