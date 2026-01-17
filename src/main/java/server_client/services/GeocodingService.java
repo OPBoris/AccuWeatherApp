@@ -24,7 +24,7 @@ public class GeocodingService {
         }
 
 
-        if (!city.trim().matches("[a-zA-ZäöüÄÖÜß\\s\\-,]+")) {
+        if (!city.trim().matches("[a-zA-ZäöüÄÖÜß.\\s\\-,]+")) {
             throw new WeatherAppException("City name can only contain letters, spaces, hyphens, and commas");
         }
 

@@ -27,7 +27,7 @@ public class UIWeatherHandler {
             return "Please type in at least 3 characters.";
         }
 
-        if (!trimmedCity.matches("[a-zA-ZäöüÄÖÜß\\s\\-,]+")) {
+        if (!trimmedCity.matches("[a-zA-ZäöüÄÖÜß.\\s\\-,]+")) {
             return "Please type only letters (no numbers or special characters).";
         }
 
