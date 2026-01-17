@@ -1,7 +1,7 @@
 package server_client.services;
 
-import server_client.ApiClient;
-import server_client.ApiUrls;
+import server_client.api.ApiClient;
+import server_client.api.ApiUrls;
 import server_client.JsonParser;
 import server_client.WeatherCodeDecoder;
 import server_client.exceptions.WeatherAppException;

@@ -1,4 +1,4 @@
-package server_client;
+package server_client.clients;
 
 import server_client.exceptions.WeatherAppException;
 import server_client.services.SettingsService;

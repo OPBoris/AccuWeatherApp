@@ -1,6 +1,6 @@
 package server_client.services;
 
-import server_client.ApiClient;
+import server_client.api.ApiClient;
 import server_client.exceptions.WeatherAppException;
 
 

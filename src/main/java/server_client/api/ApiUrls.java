@@ -1,4 +1,4 @@
-package server_client;
+package server_client.api;
 
 public class ApiUrls {
 

@@ -2,7 +2,7 @@ package fhtw.accuweatherapp.handler;
 
 import javafx.concurrent.Task;
 import javafx.scene.control.TextArea;
-import server_client.ClientConnection;
+import server_client.clients.ClientConnection;
 import fhtw.accuweatherapp.Callback;
 
 

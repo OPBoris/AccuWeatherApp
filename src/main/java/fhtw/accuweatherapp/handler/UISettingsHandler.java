@@ -5,7 +5,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
-import server_client.ClientConnection;
+import server_client.clients.ClientConnection;
 import fhtw.accuweatherapp.Callback;
 
 

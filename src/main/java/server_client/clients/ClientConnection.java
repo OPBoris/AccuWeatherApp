@@ -1,4 +1,4 @@
-package server_client;
+package server_client.clients;
 
 import java.io.*;
 import java.net.Socket;

@@ -5,7 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
-import server_client.ClientConnection;
+import server_client.clients.ClientConnection;
 
 
 public class UIController {

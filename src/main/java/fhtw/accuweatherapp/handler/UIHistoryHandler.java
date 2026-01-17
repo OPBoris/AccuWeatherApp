@@ -3,7 +3,7 @@ package fhtw.accuweatherapp.handler;
 import fhtw.accuweatherapp.Callback;
 import javafx.concurrent.Task;
 import javafx.scene.control.ComboBox;
-import server_client.ClientConnection;
+import server_client.clients.ClientConnection;
 
 import java.util.ArrayList;
 import java.util.Arrays;

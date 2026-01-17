@@ -1,4 +1,4 @@
-package server_client;
+package server_client.api;
 
 import server_client.exceptions.WeatherAppException;
 
