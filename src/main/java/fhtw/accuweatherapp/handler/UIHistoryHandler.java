@@ -54,35 +54,6 @@ public class UIHistoryHandler {
         new Thread(task, "load-history").start();
     }
 
-    public void showHistory(Callback<String> onResponse) {
-        Task<String> task = new Task<>() {
-            @Override
-            protected String call() throws Exception {
-                return connection.sendCommand("GET_HISTORY");
-            }
-        };
-
-        task.setOnSucceeded(e -> {
-            String resp = task.getValue();
-            if (resp != null) {
-                onResponse.call(resp);
-            } else {
-                onResponse.call("No response from server.");
-            }
-        });
-
-        task.setOnFailed(e -> {
-            Throwable ex = task.getException();
-            if (ex != null) {
-                onResponse.call("Error: " + ex.getMessage());
-            } else {
-                onResponse.call("Unknown error occurred.");
-            }
-        });
-
-        new Thread(task, "show-history").start();
-    }
-
 
     public void exportHistoricalDataCSV(String city, String unit, Callback<String> onSuccess,
                                         Callback<String> onError) {
