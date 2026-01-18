@@ -312,4 +312,8 @@ public class UIController {
             loadForecastOrHistory(city.trim());
         }
     }
+
+    public void shutdown() {
+        connection.close();
+    }
 }

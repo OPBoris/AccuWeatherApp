@@ -14,6 +14,14 @@ public class UI extends Application {
         Scene scene = new Scene(fxmlLoader.load(), 650, 450);
         stage.setTitle("AccuWeather App");
         stage.setScene(scene);
+
+        UIController controller = fxmlLoader.getController();
+        stage.setOnCloseRequest(event -> {
+            if (controller != null) {
+                controller.shutdown();
+            }
+        });
+
         stage.show();
     }
 
