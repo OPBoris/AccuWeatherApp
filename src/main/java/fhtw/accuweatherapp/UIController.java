@@ -290,7 +290,6 @@ public class UIController {
             txt_field_cur_weather.setText("Loading offline data...");
             offlineHandler.loadAllOfflineData(
                     resp -> txt_field_cur_weather.setText(resp),
-                    null,
                     txt_field_day1, txt_field_day2, txt_field_day3, txt_field_day4, txt_field_day5
             );
         } else {

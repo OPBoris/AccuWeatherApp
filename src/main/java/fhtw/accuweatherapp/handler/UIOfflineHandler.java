@@ -86,13 +86,12 @@ public class UIOfflineHandler {
     }
 
     public void loadAllOfflineData(Callback<String> onCurrentWeather,
-                                   Callback<String[]> onForecast,
                                    TextArea day1, TextArea day2, TextArea day3,
                                    TextArea day4, TextArea day5) {
 
         loadOfflineCurrentWeather(onCurrentWeather, data -> {
         });
-        day1.setText("No offline\nforecast data\navailable.");
+        day1.setText("Forecast data\nnot available\nin offline mode.");
         day2.setText("");
         day3.setText("");
         day4.setText("");
