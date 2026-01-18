@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="main_pane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fhtw.accuweatherapp.UIController">
+   <top>
+      <HBox prefHeight="25.0" prefWidth="580.0" BorderPane.alignment="CENTER">
+         <children>
+            <TextField fx:id="txt_field_city" prefHeight="25.0" prefWidth="333.0" promptText="City">
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </TextField>
+            <Button fx:id="btn_safe_favourite" mnemonicParsing="false" onAction="#onSafeFavourite" prefHeight="25.0" prefWidth="40.0" text="☆" />
+            <MenuButton fx:id="menu_user" mnemonicParsing="false" prefHeight="25.0" prefWidth="90.0" text="User">
+              <items>
+                <MenuItem fx:id="menu_item_moritz" mnemonicParsing="false" onAction="#onMoritz" text="Moritz" />
+                <MenuItem fx:id="menu_item_jan" mnemonicParsing="false" onAction="#onJan" text="Jan" />
+                  <MenuItem fx:id="menu_item_boris" mnemonicParsing="false" onAction="#onBoris" text="Boris" />
+              </items>
+            </MenuButton>
+            <ComboBox fx:id="combox_last_used" prefHeight="25.0" prefWidth="99.0" promptText="Recently" />
+            <Button fx:id="btn_search" mnemonicParsing="false" onAction="#onSearch" prefHeight="25.0" prefWidth="70.0" text="Search" />
+         </children>
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets>
+         <BorderPane.margin>
+            <Insets />
+         </BorderPane.margin>
+      </HBox>
+   </top>
+   <opaqueInsets>
+      <Insets />
+   </opaqueInsets>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+   <center>
+      <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+         <children>
+            <HBox prefHeight="240.0" prefWidth="200.0">
+               <children>
+                  <TextArea fx:id="txt_field_cur_weather" editable="false" prefHeight="240.0" prefWidth="630.0" text="Current Weather" />
+                  <ListView fx:id="list_favorites" prefHeight="240.0" prefWidth="325.0" />
+               </children>
+            </HBox>
+            <HBox prefHeight="255.0" prefWidth="580.0">
+               <children>
+                  <TextArea fx:id="txt_field_day1" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 1">
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </TextArea>
+                  <TextArea fx:id="txt_field_day2" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 2">
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </TextArea>
+                  <TextArea fx:id="txt_field_day3" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 3">
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </TextArea>
+                  <TextArea fx:id="txt_field_day4" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 4">
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </TextArea>
+                  <TextArea fx:id="txt_field_day5" editable="false" prefHeight="200.0" prefWidth="200.0" text="Forecast Day 5" />
+               </children>
+            </HBox>
+            <HBox prefHeight="24.0" prefWidth="580.0">
+               <children>
+                  <Button fx:id="btn_report" mnemonicParsing="false" onAction="#onReport" prefHeight="25.0" prefWidth="118.0" text="Download Report">
+                     <HBox.margin>
+                        <Insets right="10.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button fx:id="btn_offline" mnemonicParsing="false" onAction="#onOffline" text="Offline Mode">
+                     <HBox.margin>
+                        <Insets right="10.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+                  <MenuButton fx:id="menu_unit" mnemonicParsing="false" text="Unit">
+                    <items>
+                      <MenuItem fx:id="menu_item_c" mnemonicParsing="false" onAction="#onUnitC" text="°C" />
+                      <MenuItem fx:id="menu_item_f" mnemonicParsing="false" onAction="#onUnitF" text="°F" />
+                    </items>
+                     <HBox.margin>
+                        <Insets right="10.0" top="5.0" />
+                     </HBox.margin>
+                  </MenuButton>
+                  <CheckBox fx:id="check_feels_like" mnemonicParsing="false" onAction="#onCheckFeelsLike" text="Feels Like">
+                     <HBox.margin>
+                        <Insets right="10.0" top="8.5" />
+                     </HBox.margin>
+                  </CheckBox>
+                  <CheckBox fx:id="check_humidity" mnemonicParsing="false" onAction="#onCheckHumidity" text="Humidity">
+                     <HBox.margin>
+                        <Insets right="10.0" top="8.5" />
+                     </HBox.margin>
+                  </CheckBox>
+                  <CheckBox fx:id="check_wind" mnemonicParsing="false" onAction="#onCheckWind" text="Wind">
+                     <HBox.margin>
+                        <Insets right="10.0" top="8.5" />
+                     </HBox.margin>
+                  </CheckBox>
+                  <CheckBox fx:id="check_history" mnemonicParsing="false" onAction="#onCheckHistory" text="History">
+                     <HBox.margin>
+                        <Insets right="10.0" top="8.5" />
+                     </HBox.margin>
+                  </CheckBox>
+               </children>
+            </HBox>
+            <HBox prefHeight="24.0" prefWidth="580.0">
+               <children>
+                  <Button fx:id="btn_setasstandard" mnemonicParsing="false" onAction="#onsetasstandard" text="Set as standard">
+                     <HBox.margin>
+                        <Insets right="27.0" top="5.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button fx:id="btn_uimode" mnemonicParsing="false" onAction="#onuimode" prefHeight="26.0" prefWidth="52.0" style="-fx-background-color: black;" text="Black" textFill="WHITE">
+                     <HBox.margin>
+                        <Insets top="5.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
+         </children>
+         <BorderPane.margin>
+            <Insets top="10.0" />
+         </BorderPane.margin>
+      </VBox>
+   </center>
+</BorderPane>
