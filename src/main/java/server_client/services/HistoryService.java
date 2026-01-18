@@ -43,6 +43,8 @@ public class HistoryService {
                     while ((line = reader.readLine()) != null) {
                         oldLines.add(line);
                     }
+                } catch (IOException e) {
+                    System.err.println("Error while reading the CSV File: " + e.getMessage());
                 }
             }
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
@@ -77,10 +79,6 @@ public class HistoryService {
                     .filter(parts -> parts.length >= 3 && parts[1].equals(username))
                     .map(parts -> parts[2])
                     .toList();
-
-
-            List<String> reversed = new ArrayList<>(cities);
-            java.util.Collections.reverse(reversed);
 
 
             return cities.stream()
@@ -216,7 +214,7 @@ public class HistoryService {
     }
 
 
-    public String getHistoricalWeather(double lat, double lon, String unit) throws  WeatherAppException {
+    public String getHistoricalWeather(double lat, double lon, String unit) throws WeatherAppException {
         try {
 
             java.time.LocalDate today = java.time.LocalDate.now();

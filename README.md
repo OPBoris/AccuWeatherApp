@@ -39,7 +39,7 @@ Eine JavaFX-basierte Wetteranwendung mit Client-Server-Architektur. Die Anwendun
 
 ### Architektur
 - **Client-Server-Architektur** mit TCP-Socket-Kommunikation
-- **Multithreading**: Server nutzt ExecutorService für parallele Client-Anfragen
+- **Multithreading**: Server nutzt Multithreading für parallele Client-Anfragen
 - **JavaFX GUI**: FXML-basierte Benutzeroberfläche mit asynchronen Task-Operationen
 
 ### OOP-Konzepte

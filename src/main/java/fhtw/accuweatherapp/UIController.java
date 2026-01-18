@@ -276,7 +276,7 @@ public class UIController {
             );
         } else {
 
-            historyHandler.showHistory(resp -> txt_field_cur_weather.setText(resp));
+            txt_field_cur_weather.setText("Please check the History Checkbox to enable historical data reporting.");
         }
     }
 
