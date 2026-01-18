@@ -1,5 +1,7 @@
 package server_client;
 
+import server_client.exceptions.WeatherAppException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,87 +22,104 @@ public class JsonParser {
     }
 
     public static String extractValue(String json, String key) {
-        String searchKey = "\"" + key + "\":";
-        int keyIndex = json.indexOf(searchKey);
-        if (keyIndex == -1) return null;
+        try {
+            String searchKey = "\"" + key + "\":";
+            int keyIndex = json.indexOf(searchKey);
+            if (keyIndex == -1) return null;
 
-        int valueStart = keyIndex + searchKey.length();
-        while (valueStart < json.length() && (json.charAt(valueStart) == ' ' || json.charAt(valueStart) == '\t')) {
-            valueStart++;
-        }
-
-        if (json.charAt(valueStart) == '"') {
-            valueStart++;
-            int valueEnd = json.indexOf("\"", valueStart);
-            if (valueEnd == -1) return null;
-            return json.substring(valueStart, valueEnd);
-        } else {
-            int valueEnd = valueStart;
-            while (valueEnd < json.length() &&
-                    json.charAt(valueEnd) != ',' &&
-                    json.charAt(valueEnd) != '}' &&
-                    json.charAt(valueEnd) != ']') {
-                valueEnd++;
+            int valueStart = keyIndex + searchKey.length();
+            while (valueStart < json.length() && (json.charAt(valueStart) == ' ' || json.charAt(valueStart) == '\t')) {
+                valueStart++;
             }
-            return json.substring(valueStart, valueEnd).trim();
+
+            if (valueStart >= json.length()) return null;
+
+            if (json.charAt(valueStart) == '"') {
+                valueStart++;
+                int valueEnd = json.indexOf("\"", valueStart);
+                if (valueEnd == -1) return null;
+                return json.substring(valueStart, valueEnd);
+            } else {
+                int valueEnd = valueStart;
+                while (valueEnd < json.length() &&
+                        json.charAt(valueEnd) != ',' &&
+                        json.charAt(valueEnd) != '}' &&
+                        json.charAt(valueEnd) != ']') {
+                    valueEnd++;
+                }
+                return json.substring(valueStart, valueEnd).trim();
+            }
+        } catch (IndexOutOfBoundsException e) {
+            System.err.println("Error extracting value for key '" + key + "': " + e.getMessage());
+            return null;
         }
     }
 
-    public static double parseDoubleValue(String json, String key) {
-        String value = extractValue(json, key);
-        if (value != null) {
-            return Double.parseDouble(value);
-        } else {
-            return 0.0;
+    public static double parseDoubleValue(String json, String key) throws WeatherAppException {
+        try {
+            String value = extractValue(json, key);
+            if (value != null && !value.equals("null")) {
+                return Double.parseDouble(value);
+            }
+        } catch (NumberFormatException e) {
+            throw new WeatherAppException("Error parsing Double for key '" + key + "'", e);
         }
+        return 0.0;
     }
 
-    public static int parseIntValue(String json, String key) {
-        String value = extractValue(json, key);
-        if (value != null) {
-            return Integer.parseInt(value);
-        } else {
-            return 0;
+    public static int parseIntValue(String json, String key) throws WeatherAppException {
+        try {
+            String value = extractValue(json, key);
+            if (value != null && !value.equals("null")) {
+                return Integer.parseInt(value);
+            }
+        } catch (NumberFormatException e) {
+            throw new WeatherAppException("Error parsing Int for key '" + key + "'", e);
         }
+        return 0;
     }
 
     public static List<String> parseArrayValues(String json, String key) {
         List<String> values = new ArrayList<>();
-        String searchKey = "\"" + key + "\":";
-        int keyIndex = json.indexOf(searchKey);
-        if (keyIndex == -1) return values;
+        try {
+            String searchKey = "\"" + key + "\":";
+            int keyIndex = json.indexOf(searchKey);
+            if (keyIndex == -1) return values;
 
-        int arrayStart = json.indexOf("[", keyIndex);
-        if (arrayStart == -1) return values;
+            int arrayStart = json.indexOf("[", keyIndex);
+            if (arrayStart == -1) return values;
 
-        int arrayEnd = json.indexOf("]", arrayStart);
-        if (arrayEnd == -1) return values;
+            int arrayEnd = json.indexOf("]", arrayStart);
+            if (arrayEnd == -1) return values;
 
-        String arrayContent = json.substring(arrayStart + 1, arrayEnd);
+            String arrayContent = json.substring(arrayStart + 1, arrayEnd);
 
-        StringBuilder currentValue = new StringBuilder();
-        boolean inString = false;
+            StringBuilder currentValue = new StringBuilder();
+            boolean inString = false;
 
-        for (int i = 0; i < arrayContent.length(); i++) {
-            char c = arrayContent.charAt(i);
+            for (int i = 0; i < arrayContent.length(); i++) {
+                char c = arrayContent.charAt(i);
 
-            if (c == '"') {
-                inString = !inString;
-                currentValue.append(c);
-            } else if (c == ',' && !inString) {
-                String val = currentValue.toString().trim();
-                if (!val.isEmpty()) {
-                    values.add(val);
+                if (c == '"') {
+                    inString = !inString;
+                    currentValue.append(c);
+                } else if (c == ',' && !inString) {
+                    String val = currentValue.toString().trim();
+                    if (!val.isEmpty()) {
+                        values.add(val);
+                    }
+                    currentValue = new StringBuilder();
+                } else {
+                    currentValue.append(c);
                 }
-                currentValue = new StringBuilder();
-            } else {
-                currentValue.append(c);
             }
-        }
 
-        String val = currentValue.toString().trim();
-        if (!val.isEmpty()) {
-            values.add(val);
+            String val = currentValue.toString().trim();
+            if (!val.isEmpty()) {
+                values.add(val);
+            }
+        } catch (IndexOutOfBoundsException e) {
+            System.err.println("Error parsing array for key '" + key + "': " + e.getMessage());
         }
 
         return values;

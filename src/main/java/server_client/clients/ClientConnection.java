@@ -61,13 +61,15 @@ public class ClientConnection implements Closeable {
             if (reader != null) {
                 reader.close();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            System.err.println("Error closing reader/writer: " + e.getMessage());
         }
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            System.err.println("Error closing socket: " + e.getMessage());
         }
     }
 
