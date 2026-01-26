@@ -10,7 +10,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 
 public class HistoryService {
@@ -197,7 +196,7 @@ public class HistoryService {
                     double windVal = Double.parseDouble(windSpeed.get(i));
 
 
-                    writer.write(String.format(Locale.ENGLISH, "%s,%d,%.1f,%.1f,%.1f,%s,%.1f ,%.1f",
+                    writer.write(String.format("%s,%d,\"%.1f\",\"%.1f\",\"%.1f\",%s,\"%.1f\",\"%.1f\"",
                             dateStr, daysAgo, tempMeanVal, tempMaxVal, tempMinVal,
                             weatherDesc, windVal, precipVal));
                     writer.newLine();
