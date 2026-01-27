@@ -6,7 +6,7 @@ import javafx.scene.control.ListView;
 import server_client.clients.ClientConnection;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -113,7 +113,9 @@ public class UIFavoritesHandler {
                 if (response != null && response.startsWith("FAVORITES:")) {
                     String data = response.substring(10).trim();
                     if (!data.isEmpty()) {
-                        return Arrays.asList(data.split(","));
+                        List<String> result = new ArrayList<>();
+                        Collections.addAll(result, data.split(","));
+                        return result;
                     }
                 }
                 return new ArrayList<>();

@@ -6,7 +6,7 @@ import javafx.scene.control.ComboBox;
 import server_client.clients.ClientConnection;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -30,7 +30,9 @@ public class UIHistoryHandler {
                 if (response != null && response.startsWith("HISTORY:")) {
                     String cities = response.substring(8).trim();
                     if (!cities.isEmpty()) {
-                        return Arrays.asList(cities.split(","));
+                        List<String> result = new ArrayList<>();
+                        Collections.addAll(result, cities.split(","));
+                        return result;
                     }
                 }
                 return new ArrayList<>();
