@@ -46,11 +46,11 @@ public class UIFavoritesHandler {
                 isCurrentCityFavorite = !isCurrentCityFavorite;
                 String action;
                 if (isCurrentCityFavorite) {
-                    action = "added";
+                    action = "added to";
                 } else {
-                    action = "removed";
+                    action = "removed from";
                 }
-                onSuccess.call(trimmedCity + " " + action + " " + "to favourites.");
+                onSuccess.call(trimmedCity + " " + action + " " + "favourites.");
             } else {
                 onError.call("Error: " + resp);
             }
